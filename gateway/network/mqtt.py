@@ -32,8 +32,7 @@ class IotCoreMQTT(MQTTBroker):
         return
 
     def __del__(self) -> None:
-        disconnect_future = self._connection.disconnect()
-        disconnect_future.result()
+        self.disconnect()
         return
 
     def connect(self) -> None:
@@ -44,15 +43,21 @@ class IotCoreMQTT(MQTTBroker):
         try:
             connect_future.result(5)
             self._is_connected = True
-        except CancelledError:
+            print("Connected to AWS IoT Core")
+        except CancelledError as err:
             print("Connection to AWS IoT Core cancelled")
-            return
-        except TimeoutError:
+            raise err
+        except TimeoutError as err:
             print("Connection to AWS IoT Core timed out")
-            return
-        else:
+            raise err
+        except Exception as err:
             print("Connection to AWS IoT Core failed for unknown reason")
-            return
+            raise err
+        
+    def disconnect(self) -> None:
+        dist_future = self._connection.disconnect()
+        dist_future.result()
+        return
 
     def publish(self, topic: str, payload: typing.Dict[str, any]) -> None:
         self._connection.publish(
@@ -60,7 +65,7 @@ class IotCoreMQTT(MQTTBroker):
             payload=json.dumps(payload),
             qos=mqtt.QoS.AT_LEAST_ONCE
         )
-        print("Message published")
+        print(f"Message published to {topic}")
         return
 
     def subscribe(self, topic: str, func: callable) -> any:
@@ -69,6 +74,11 @@ class IotCoreMQTT(MQTTBroker):
             qos=mqtt.QoS.AT_LEAST_ONCE,
             callback=func
         )
-        subscribe_result = subscribe_future.result()
-        print(f"Received from {topic}, packet ID {packet_id}")
+        try:
+            subscribe_result = subscribe_future.result()
+            print("Result: {}".format(str(subscribe_result['qos'])))
+        except Exception as err:
+            print(err)
+            raise err
+        print(f"Subcribed to {topic}, packet ID {packet_id}")
         return subscribe_result

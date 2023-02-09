@@ -15,6 +15,9 @@ class MQTTBroker:
     # Initiates a connection with the MQTT broker
     def connect(self) -> None:
         pass
+    
+    def disconnect(self) -> None:
+        pass
 
     # Publish a message to the broker
     def publish(self, topic: str, payload: typing.Dict[str, any]) -> None:

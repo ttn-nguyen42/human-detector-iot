@@ -9,13 +9,18 @@
 #
 import signal
 import sys
+import threading
 from network.aws import Certs, get_certs_path, get_url_endpoint
 from network.common import MQTTBroker
 from network.mqtt import IotCoreMQTT
+from reader.command_read import register_command_subscriber
 from reader.controller_read import send_sensor_data
+from repositories.command import CommandRepository, ICommandRepository
 from repositories.sensor_data import ISensorDataRepository, SensorDataRepository
+from services.command import CommandService, ICommandService
 from services.sensor_data import ISensorDataService, SensorDataService
 from utils.utils import get_device_id
+
 
 def main():
     try:
@@ -27,11 +32,12 @@ def main():
             # Print out exception message
             print(env_err.args[0])
             # If environment variables are not found, simply exit the program
-            sys.exit(-1)
+            sys.exit()
 
         # Should be authenticating to the backend
         #
         id = get_device_id()
+        print(f"Device ID: {id}")
         # password = register_device(id)
         # print(f"Your device password: {password}")
         #
@@ -52,10 +58,14 @@ def main():
         except Exception as con_err:
             print("Unable to connect to message broker after retries")
             print(con_err.args)
-            sys.exit(-1)
+            sys.exit()
 
         # Initializes repository layers here
         sensor_data_repository: ISensorDataRepository = SensorDataRepository(
+            broker=aws_mqtt
+        )
+
+        command_repository: ICommandRepository = CommandRepository(
             broker=aws_mqtt
         )
 
@@ -64,18 +74,24 @@ def main():
             sensorDataRepository=sensor_data_repository
         )
 
+        command_service: ICommandService = CommandService(
+            commandRepository=command_repository
+        )
+
+        # Listen to commands
+        register_command_subscriber(id, command_service)
+
         # Listen to sensor data from YoloBit
         # Then sends that to the service layer
         # This acts as a controller layer to complete the MVC architecture
         # Not implemented
-        send_sensor_data(sensor_data_service)
+        send_sensor_data(id, sensor_data_service)
+        return 0
     except KeyboardInterrupt:
+        exit()
+    finally:
         del aws_mqtt
-        sys.exit()
-
-    return 0
 
 
 if __name__ == "__main__":
     main()
-        

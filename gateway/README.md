@@ -54,3 +54,13 @@ AWS_IOT_CORE_ROOT_CA=./certs/root-CA.crt
 8. Ở dưới, bấm vào `Certificates`, chọn `Policies`, chọn cái đầu tiên
 9. Ở `All versions`, bấm vào hàng đầu tiên, chọn `Edit version`
 10. Tại các trường `Policy resource`, xóa hết và đổi lại thành `*`. Bấm `Save as new version`
+
+### Kiểm tra dữ liệu trên AWS
+Ứng dụng sẽ gửi dữ liệu lên AWS, để kiểm tra, có thể vào `AWS IoT Core > MQTT test client`.
+Tại `Topic filter`, chọn topic muốn lắng nghe. Muốn biết có những topic nào thì đọc code, topic name thường nằm trong `repositories/`
+
+## References
+1. [Hướng dẫn sử dụng AWS IoT Core SDK](https://aws.amazon.com/premiumsupport/knowledge-center/iot-core-publish-mqtt-messages-python/)
+2. [Cách publish dữ liệu lên MQTT broker của AWS IoT Core SDK](https://dev.to/aws-builders/aws-iot-pubsub-over-mqtt-1oig)
+3. [Get started with AWS IoT Core Quick Connect](https://www.youtube.com/watch?v=6w9a6y_-T2o)
+4. [MQTT Overview](https://www.youtube.com/watch?v=EIxdz-2rhLs)

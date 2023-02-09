@@ -23,9 +23,10 @@ class SensorDataRepository(ISensorDataRepository):
 
     def __init__(self, broker: MQTTBroker) -> None:
         self._broker = broker
-        self._topic = "input_sensor_data"
+        self._topic = "yolobit/data/sensor"
         return
-    
+
     def send_sensor_packet(self, packet: SensorData) -> None:
-        self._broker.publish(self._topic, packet)
+        topic = f"{self._topic}/{packet.device_id}"
+        self._broker.publish(topic, packet)
         return

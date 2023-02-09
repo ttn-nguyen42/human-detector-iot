@@ -53,4 +53,4 @@ AWS_IOT_CORE_ROOT_CA=./certs/root-CA.crt
 7. Quay lại với AWS. Ở bên trái, bấm vào `All devices`, chọn `Things`. Chọn vào dự án vừa tạo
 8. Ở dưới, bấm vào `Certificates`, chọn `Policies`, chọn cái đầu tiên
 9. Ở `All versions`, bấm vào hàng đầu tiên, chọn `Edit version`
-10. Tại các trường `Policy resource", xóa hết và đổi lại thành `*`. Bấm `Save as new version`
+10. Tại các trường `Policy resource`, xóa hết và đổi lại thành `*`. Bấm `Save as new version`

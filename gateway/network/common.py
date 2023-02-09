@@ -26,5 +26,6 @@ class MQTTBroker:
     # Subscribe to a topic
     # Returns subscription settings
     # Data can be access through func() as a callback
-    def subscribe(self, topic: str, func: callable) -> any:
+    def subscribe(self, topic: str, func: callable) -> None:
         pass
+    

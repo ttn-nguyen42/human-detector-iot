@@ -26,6 +26,3 @@ def _read_sensor_data() -> SensorDataDto:
         heat_level=10,
         light_level=10
     )
-
-def listen_settings_data():
-    pass

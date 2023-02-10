@@ -12,6 +12,9 @@ ENV AWS_IOT_CORE_PRIVATE=
 ENV AWS_IOT_CORE_PUBLIC=
 ENV AWS_IOT_CORE_ENDPOINT=
 ENV AWS_IOT_CORE_ROOT_CA=
+
+ENV LOG_LEVEL=
+ENV SQLITE_DATABASE=
 ```
 Các biến này được cài đặt như sau:
 1. Tạo một file `.env`. File này bị `.gitignore` nên sẽ không bị đẩy lên GitHub
@@ -22,11 +25,15 @@ AWS_IOT_CORE_PRIVATE=
 AWS_IOT_CORE_PUBLIC=
 AWS_IOT_CORE_ENDPOINT=
 AWS_IOT_CORE_ROOT_CA=./certs/root-CA.crt
+LOG_LEVEL=
+SQLITE_DATABASE=
 ```
-3. Để lấy được giá trị cho các biến còn thiếu, xem phần phía dưới để biết cách setup AWS
-4. Sau khi đã chuẩn bị AWS xong, chạy project bằng Docker như sau:
-1. `docker build -t project/iot_gateway -f ./Dockerfile .`
-2. `docker run -it --env-file=./.env project/iot_gateway`
+1. Để lấy được giá trị cho các biến còn thiếu, xem phần phía dưới để biết cách setup AWS
+2. Sau khi đã chuẩn bị AWS xong, set log level. `DEBUG` sẽ in nhiều log hơn `INFO`
+3. Sau đó, set location cho database của SQLite. Ví dụ: `db/persistence.database`, khi chạy thì dữ liệu local sẽ nằm trong file database này
+4. Chạy Docker, mount vị trí của file database (folder `db/` trong ví dụ trên)
+- `docker build -t project/iot_gateway -f ./Dockerfile .`
+- `docker run -it -v "$(pwd)/db":"/gateway/db" --env-file=./.env nguyentrantrung/iot_gateway:latest`
 `--env-file=./.env` lấy file `.env` vừa tạo để set các environment variable cho dự án.
 
 ### Hướng dẫn setup AWS

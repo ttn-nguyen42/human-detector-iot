@@ -56,6 +56,8 @@ AWS_IOT_CORE_PRIVATE=./certs/human_detector_dev.private.key
 AWS_IOT_CORE_PUBLIC=./certs/human_detector_dev.public.key
 AWS_IOT_CORE_ENDPOINT=cai-gi-do-tai-day.ap-southeast-1.amazonaws.com
 AWS_IOT_CORE_ROOT_CA=./certs/root-CA.crt
+LOG_LEVEL=DEBUG
+SQLITE_DATABASE=db/persistence.database
 ```
 7. Quay lại với AWS. Ở bên trái, bấm vào `All devices`, chọn `Things`. Chọn vào dự án vừa tạo
 8. Ở dưới, bấm vào `Certificates`, chọn `Policies`, chọn cái đầu tiên
@@ -64,7 +66,7 @@ AWS_IOT_CORE_ROOT_CA=./certs/root-CA.crt
 
 ### Kiểm tra dữ liệu trên AWS
 Ứng dụng sẽ gửi dữ liệu lên AWS, để kiểm tra, có thể vào `AWS IoT Core > MQTT test client`.
-Tại `Topic filter`, chọn topic muốn lắng nghe. Muốn biết có những topic nào thì đọc code, topic name thường nằm trong `repositories/`
+Tại `Topic filter`, chọn topic muốn lắng nghe. Muốn biết có những topic nào thì đọc code, topic name thường nằm trong `repositories/` hoặc qua log
 
 ## References
 1. [Hướng dẫn sử dụng AWS IoT Core SDK](https://aws.amazon.com/premiumsupport/knowledge-center/iot-core-publish-mqtt-messages-python/)

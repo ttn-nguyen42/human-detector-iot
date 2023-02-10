@@ -18,4 +18,6 @@ ENV AWS_IOT_CORE_ROOT_CA=
 
 ENV LOG_LEVEL=
 
+ENV SQLITE_DATABASE=
+
 CMD [ "python3", "main.py" ]

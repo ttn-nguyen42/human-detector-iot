@@ -6,7 +6,7 @@ Repository layer for listening to backend's command
 
 
 import logging
-from network.common import MQTTBroker
+from network.mqtt import MQTTBroker
 
 
 class ICommandRepository:

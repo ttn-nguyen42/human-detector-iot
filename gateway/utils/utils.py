@@ -4,10 +4,12 @@ from uuid import uuid4
 
 ENV_LOG_LEVEL="LOG_LEVEL"
 
-def get_device_id():
-    return f"client-{str(uuid4())}"
+def make_device_id():
+    # Generates a random device ID
+    return f"client_{str(uuid4())}"
 
 def get_log_level() -> int:
+    # Reads LOG_LEVEL environment variable
     level = os.environ.get(ENV_LOG_LEVEL)
     if len(level) == 0:
         return logging.INFO

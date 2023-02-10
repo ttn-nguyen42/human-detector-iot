@@ -13,13 +13,3 @@ class StatusSignal(dict):
         self.status_signal = status
         self.action = action
         dict.__init__(self, action=action, status_signal=status)
-        
-# Device settings
-class DeviceSettings(dict):
-    action: str
-    data_rate: int
-    
-    def __init__(self, action: str, data_rate: int) -> None:
-        self.action = action
-        self.data_rate = data_rate
-        dict.__init__(self, action=action, data_rate=data_rate)

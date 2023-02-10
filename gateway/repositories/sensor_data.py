@@ -5,7 +5,7 @@ Repository layer for communicating with a back-end or database/message broker
 """
 
 from models.sensor_data import SensorData
-from network.common import MQTTBroker
+from network.mqtt import MQTTBroker
 
 
 class ISensorDataRepository:

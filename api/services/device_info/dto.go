@@ -1,6 +1,6 @@
-package register_device
+package deviceInfo
 
 // The payload body for POST /register_device
 type POSTRegisterDeviceDto struct {
-	deviceId string `json:"device_id"`
+	DeviceId string `json:"device_id"`
 }

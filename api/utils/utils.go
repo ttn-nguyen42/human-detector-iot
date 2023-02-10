@@ -27,3 +27,8 @@ func GetPort() string {
 	}
 	return port
 }
+
+// Get the database driver from environment variables
+func GetMongoDriver() (string, error) {
+	return "", nil
+}

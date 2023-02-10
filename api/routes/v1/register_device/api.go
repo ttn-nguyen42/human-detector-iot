@@ -1,7 +1,7 @@
 package register_device
 
 import (
-	"iot_api/services/register_device"
+	deviceInfo "iot_api/services/device_info"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,7 +15,7 @@ func POSTRegisterDevice() gin.HandlerFunc {
 		The device will send its device_id
 		and the backend returns a password associated with it
 		*/
-		var postRequest register_device.POSTRegisterDeviceDto
+		var postRequest deviceInfo.POSTRegisterDeviceDto
 		// Take in raw payload in bytes
 		// deserializes it into a normal struct
 		ctx.BindJSON(&postRequest)

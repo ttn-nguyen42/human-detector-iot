@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"math/rand"
 	"os"
 	"time"
@@ -31,4 +33,13 @@ func GetPort() string {
 // Get the database driver from environment variables
 func GetMongoDriver() (string, error) {
 	return "", nil
+}
+
+/*
+Hashes a string using MD5
+Not secure, but usable
+*/
+func MD5Hash(str string) string {
+	hash := md5.Sum([]byte(str))
+	return hex.EncodeToString(hash[:])
 }

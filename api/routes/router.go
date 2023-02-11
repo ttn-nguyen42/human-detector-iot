@@ -3,8 +3,8 @@ package routes
 import (
 	"iot_api/database"
 	"iot_api/models"
-	repositories "iot_api/repositories/device_info"
-	deviceInfo "iot_api/services/device_info"
+	"iot_api/repositories"
+	"iot_api/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -29,8 +29,10 @@ func Create(engine *gin.Engine) {
 	
 	deviceInfoRepo := repositories.NewDeviceInfoRepository(deviceInfoCol)
 
-	deviceInfoService := deviceInfo.NewDeviceInfoService(deviceInfoRepo)
+	deviceInfoService := services.NewDeviceInfoService(deviceInfoRepo)
 
-	
+	v1 := engine.Group("/api/backend")
+
+	v1.POST("/register_device", POSTRegisterDevice(deviceInfoService))
 
 }

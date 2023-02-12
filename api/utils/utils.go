@@ -58,3 +58,49 @@ func MD5Hash(str string) string {
 	hash := md5.Sum([]byte(str))
 	return hex.EncodeToString(hash[:])
 }
+
+type CertsPaths struct {
+	RootCA string
+	PrivateKey string
+	Cert string
+}
+
+func GetAWSIoTCertPaths() (*CertsPaths, error) {
+	rootCaPath := os.Getenv(EnvAWSIoTRootCA)
+	if len(rootCaPath) == 0 {
+		return nil, fmt.Errorf("missing AWS Root CA path")
+	}
+	privateKeyPath := os.Getenv(EnvAWSIoTPrivateKey)
+	if len(privateKeyPath) == 0 {
+		return nil, fmt.Errorf("missing AWS IoT private key path")
+	}
+	certPath := os.Getenv(EnvAWSIoTCert)
+	if len(certPath) == 0 {
+		return nil, fmt.Errorf("missing AWS IoT cert path")
+	}
+	return &CertsPaths{
+		RootCA: rootCaPath,
+		PrivateKey: privateKeyPath,
+		Cert: certPath,
+	}, nil
+}
+
+func GetAWSIoTEndpoint() (string, error) {
+	endpoint := os.Getenv(EnvAWSIoTEndpoint)
+	if len(endpoint) == 0 {
+		return "", fmt.Errorf("missing AWS IoT endpoint")
+	}
+	return endpoint, nil
+}
+
+func GetJwtSignKey() (string, error) {
+	key := os.Getenv(EnvJwtSignKey)
+	if len(key) == 0 {
+		return "", fmt.Errorf("missing JWT sign key")
+	}
+	return key, nil
+}
+
+func GetPasswordHash(raw string) string {
+	return MD5Hash(raw)
+}

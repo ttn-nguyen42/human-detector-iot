@@ -1,6 +1,7 @@
 package services
 
 import (
+	"iot_api/auths"
 	"iot_api/custom"
 	"iot_api/dtos"
 	"iot_api/models"
@@ -10,6 +11,7 @@ import (
 
 type DeviceInfoService interface {
 	CreatePassword(req *dtos.POSTRegisterDeviceDto) (*dtos.POSTRegisterDeviceResponse, error)
+	AuthenticateByPassword(req *dtos.POSTLoginRequest) (*dtos.POSTLoginResponse, error)
 }
 
 type deviceInfoService struct {
@@ -31,18 +33,37 @@ func (s *deviceInfoService) CreatePassword(req *dtos.POSTRegisterDeviceDto) (*dt
 		return nil, custom.NewInternalServerError(err.Error())
 	}
 	rawPass := utils.GetRandomUUID()
-	hashPass := utils.MD5Hash(rawPass)
+	hashPass := utils.GetPasswordHash(rawPass)
 	ent := &models.DeviceCredentials{
 		DeviceId: req.DeviceId,
 		Password: hashPass,
 	}
 	_, err = s.repo.SaveCredentials(ent)
 	if err != nil {
-		return &dtos.POSTRegisterDeviceResponse{
-			Password: rawPass,
-		}, err
+		return nil, custom.NewInternalServerError(err.Error())
 	}
 	return &dtos.POSTRegisterDeviceResponse{
 		Password: rawPass,
+	}, nil
+}
+
+func (s *deviceInfoService) AuthenticateByPassword(req *dtos.POSTLoginRequest) (*dtos.POSTLoginResponse, error) {
+	creds, err := s.repo.GetCredentials(req.DeviceId)
+	if _, ok := err.(*custom.ItemNotFoundError); ok {
+		return nil, custom.NewUnauthorizedError("User not found")
+	}
+	if err != nil {
+		return nil, custom.NewInternalServerError(err.Error())
+	}
+	hashedInput := utils.GetPasswordHash(creds.Password)
+	if hashedInput != req.Password {
+		return nil, custom.NewUnauthorizedError("Wrong password")
+	}
+	token, err := auths.GenerateJwt(req.DeviceId)
+	if err != nil {
+		return nil, custom.NewInternalServerError(err.Error())
+	}
+	return &dtos.POSTLoginResponse{
+		Token: token,
 	}, nil
 }

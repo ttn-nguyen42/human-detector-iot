@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"iot_api/auths"
 	"iot_api/database"
 	"iot_api/models"
 	"iot_api/repositories"
@@ -10,7 +11,7 @@ import (
 )
 
 const (
-	DatabaseName = "iot_database"
+	DatabaseName         = "iot_database"
 	DeviceInfoCollection = "device_info"
 )
 
@@ -26,13 +27,21 @@ func Create(engine *gin.Engine) {
 	deviceInfoCol := &database.MongoCollection[models.DeviceCredentials]{
 		Col: dbClient.Database(DatabaseName).Collection(DeviceInfoCollection),
 	}
-	
+
 	deviceInfoRepo := repositories.NewDeviceInfoRepository(deviceInfoCol)
 
 	deviceInfoService := services.NewDeviceInfoService(deviceInfoRepo)
 
-	v1 := engine.Group("/api/backend")
+	// Unprotected endpoints
+	public := engine.Group("/api/backend")
+	public.POST("/register_device", POSTRegisterDevice(deviceInfoService))
+	public.POST("/login", POSTLogin(deviceInfoService))
 
-	v1.POST("/register_device", POSTRegisterDevice(deviceInfoService))
-
+	// Protected endpoints
+	// Using JWTs
+	// See auths/middleware
+	protected := engine.Group("/api/backend")
+	protected.Use(auths.JwtAuthMiddleware())
+	protected.GET("/data", GETGetDeviceData())
+	protected.POST("/settings/data_rate", POSTUpdateDataRate())
 }

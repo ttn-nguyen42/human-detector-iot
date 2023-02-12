@@ -24,7 +24,13 @@ func POSTRegisterDevice(service services.DeviceInfoService) gin.HandlerFunc {
 		var postRequest dtos.POSTRegisterDeviceDto
 		// Take in raw payload in bytes
 		// deserializes it into a normal struct
-		ctx.BindJSON(&postRequest)
+		err := ctx.BindJSON(&postRequest)
+
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, MessageResponse{
+				Message: err.Error(),
+			})
+		}
 
 		req, err := service.CreatePassword(&postRequest)
 

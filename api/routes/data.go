@@ -32,7 +32,10 @@ func GETGetDeviceData() gin.HandlerFunc {
 					return
 				}
 				var parsedPayload models.SensorData
-				models.StructifyBytes(m.Payload(), &parsedPayload)
+				err := models.StructifyBytes(m.Payload(), &parsedPayload)
+				if err != nil {
+					return
+				}
 				res <- parsedPayload
 			})
 		}()

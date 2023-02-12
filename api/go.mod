@@ -5,7 +5,6 @@ go 1.19
 require github.com/gin-gonic/gin v1.8.2
 
 require (
-	github.com/eclipse/paho.mqtt.golang v1.4.2
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
@@ -20,6 +19,7 @@ require (
 )
 
 require (
+	github.com/eclipse/paho.mqtt.golang v1.4.2
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect

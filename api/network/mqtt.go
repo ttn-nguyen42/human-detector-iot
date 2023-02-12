@@ -15,9 +15,9 @@ import (
 var once sync.Once
 
 // Singleton
-var mqttClient *mqtt.Client
+var mqttClient mqtt.Client
 
-func GetClient() *mqtt.Client {
+func GetClient() mqtt.Client {
 	if mqttClient != nil {
 		return mqttClient
 	}
@@ -28,7 +28,7 @@ func GetClient() *mqtt.Client {
 	return mqttClient
 }
 
-func connect(options *mqtt.ClientOptions) *mqtt.Client {
+func connect(options *mqtt.ClientOptions) mqtt.Client {
 	client := mqtt.NewClient(options)
 	token := client.Connect()
 	token.Wait()
@@ -36,7 +36,7 @@ func connect(options *mqtt.ClientOptions) *mqtt.Client {
 		logrus.Fatal("AWS IoT Core MQTT connection failed: %v", token.Error().Error())
 		return nil
 	}
-	return &client
+	return client
 }
 
 func getAwsMqttSettings() *mqtt.ClientOptions {

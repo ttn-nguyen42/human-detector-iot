@@ -5,8 +5,8 @@ go 1.19
 require github.com/gin-gonic/gin v1.8.2
 
 require (
-	github.com/eclipse/paho.mqtt.golang v1.4.2 // indirect
-	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
+	github.com/eclipse/paho.mqtt.golang v1.4.2
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect

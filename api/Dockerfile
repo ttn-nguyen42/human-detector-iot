@@ -1,0 +1,32 @@
+ARG SRC_PATH_GLOBAL=/go/src/iot_api
+
+#
+# BUILDER
+#
+FROM golang:1.19-alpine as builder
+
+ARG SRC_PATH_GLOBAL
+ENV SRC_PATH=${SRC_PATH_GLOBAL}
+
+WORKDIR ${SRC_PATH}/
+COPY ./ ${SRC_PATH}/
+RUN go mod tidy
+RUN CGO_ENABLED=0 go build -v -o api_server ./
+
+FROM alpine:latest as runner
+
+ARG SRC_PATH_GLOBAL
+ENV SRC_PATH=${SRC_PATH_GLOBAL}
+
+ENV PORT=8080
+ENV LOG_LEVEL=DEBUG
+ENV MONGO_CLUSTER_ID=
+ENV MONGO_USERNAME=
+ENV MONGO_PASSWORD=
+ENV AWS_IOT_ROOT_CA=
+ENV AWS_IOT_PRIVATE_KEY=
+ENV AWS_IOT_CERT=
+
+WORKDIR /root/
+COPY --from=0 ${SRC_PATH}/api_server ./
+CMD [ "./api_server" ]

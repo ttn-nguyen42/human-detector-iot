@@ -3,6 +3,7 @@ package utils
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
 	"math/rand"
 	"os"
 	"time"
@@ -32,7 +33,21 @@ func GetPort() string {
 
 // Get the database driver from environment variables
 func GetMongoDriver() (string, error) {
-	return "", nil
+	clusterId := os.Getenv(EnvMongoClusterID)
+	if len(clusterId) == 0 {
+		return "", fmt.Errorf("missing MongoDB cluster ID - %v", EnvMongoClusterID)
+	}
+	username := os.Getenv(EnvMongoUsername)
+	if len(username) == 0 {
+		return "", fmt.Errorf("missing MongoDB username - %v", EnvMongoUsername)
+	}
+	password := os.Getenv(EnvMongoPassword)
+	if len(password) == 0 {
+		return "", fmt.Errorf("missing MongoDB password - %v", EnvMongoPassword)
+	}
+	settings := "?retryWrites=true&w=majority"
+	driver := fmt.Sprintf("mongodb+srv://%v:%v@%v.mongodb.net/%v", username, password, clusterId, settings)
+	return driver, nil
 }
 
 /*

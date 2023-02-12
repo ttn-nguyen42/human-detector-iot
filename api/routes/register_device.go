@@ -41,6 +41,5 @@ func POSTRegisterDevice(service services.DeviceInfoService) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusCreated, req)
-		return
 	}
 }

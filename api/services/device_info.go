@@ -7,6 +7,8 @@ import (
 	"iot_api/models"
 	"iot_api/repositories"
 	"iot_api/utils"
+
+	"github.com/sirupsen/logrus"
 )
 
 type DeviceInfoService interface {
@@ -55,8 +57,10 @@ func (s *deviceInfoService) AuthenticateByPassword(req *dtos.POSTLoginRequest) (
 	if err != nil {
 		return nil, custom.NewInternalServerError(err.Error())
 	}
-	hashedInput := utils.GetPasswordHash(creds.Password)
-	if hashedInput != req.Password {
+	logrus.Debug(creds.Password)
+	hashedInput := utils.GetPasswordHash(req.Password)
+	logrus.Debug(hashedInput)
+	if hashedInput != creds.Password {
 		return nil, custom.NewUnauthorizedError("Wrong password")
 	}
 	token, err := auths.GenerateJwt(req.DeviceId)

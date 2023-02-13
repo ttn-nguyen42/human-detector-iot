@@ -7,6 +7,7 @@
 # Then setup a connection to AWS IoT Core MQTT broker
 # Then authenticates the device with the backend through HTTP
 #
+import http.client
 import logging
 import sys
 from database.sqlite import SQLDatabase, SqliteDatabase, get_sqlite_database
@@ -23,7 +24,7 @@ from services.backend import IRemoteBackendService, RemoteBackendService
 from services.command import CommandService, ICommandService
 from services.sensor_data import ISensorDataService, SensorDataService
 from services.settings import ILocalSettingsService, LocalSettingsService
-from utils.utils import get_log_level
+from utils.utils import get_backend_port, get_backend_url, get_log_level
 
 
 def main():
@@ -34,6 +35,8 @@ def main():
             certs: Certs = get_certs_path()
             endpoint_url: str = get_url_endpoint()
             sqlite_db_name: str = get_sqlite_database()
+            backend_url: str = get_backend_url()
+            backend_port: int = get_backend_port()
         except Exception as env_err:
             # Print out exception message
             logging.error(env_err)
@@ -47,12 +50,23 @@ def main():
             database=db
         ).initialize()
         
-        local_db_service: ILocalSettingsService = LocalSettingsService(
-            local_repository=local_db_repository
-        )
-        
+        # Establish HTTPS connection
+        http_con: http.client.HTTPConnection = None
+        port = None
+        if backend_port != 0:
+            port = backend_port
+        if "https" in backend_url:
+            http_con = http.client.HTTPSConnection(backend_url, port, timeout=5)
+        else:
+            http_con = http.client.HTTPConnection(backend_url, port, timeout=5)
         remote_backend_service: IRemoteBackendService = RemoteBackendService(
             # Should inject HTTP client here
+            http_con=http_con
+        )
+        
+        local_db_service: ILocalSettingsService = LocalSettingsService(
+            local_repository=local_db_repository,
+            be_service=remote_backend_service
         )
 
         # Should be authenticating to the backend
@@ -62,9 +76,9 @@ def main():
         try:
             id, password = authenticate(
                 service=local_db_service,
-                backend=remote_backend_service
             )
-        except Exception:
+        except Exception as err:
+            logging.debug(err)
             raise KeyboardInterrupt
         
         logging.info("Use this credentials to authenticate on web app and monitor this device")

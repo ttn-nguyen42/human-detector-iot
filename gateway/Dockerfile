@@ -20,4 +20,6 @@ ENV LOG_LEVEL=
 
 ENV SQLITE_DATABASE=
 
+ENV URL_BACKEND=
+
 CMD [ "python3", "main.py" ]

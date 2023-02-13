@@ -4,6 +4,7 @@ import (
 	"iot_api/auths"
 	"iot_api/database"
 	"iot_api/models"
+	"iot_api/network"
 	"iot_api/repositories"
 	"iot_api/services"
 
@@ -22,6 +23,7 @@ func Create(engine *gin.Engine) {
 	engine.Use(gin.Recovery())
 
 	dbClient := database.GetClient()
+	network.GetClient()
 
 	// Device Info collection
 	deviceInfoCol := &database.MongoCollection[models.DeviceCredentials]{

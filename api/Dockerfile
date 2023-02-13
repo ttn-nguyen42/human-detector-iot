@@ -31,4 +31,5 @@ ENV JWT_SECRET=
 
 WORKDIR /root/
 COPY --from=0 ${SRC_PATH}/api_server ./
+COPY ./certs/ ./certs/
 CMD [ "./api_server" ]

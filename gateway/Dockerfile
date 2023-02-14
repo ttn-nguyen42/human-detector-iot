@@ -22,4 +22,6 @@ ENV SQLITE_DATABASE=
 
 ENV URL_BACKEND=
 
+RUN mkdir /gateway/db
+
 CMD [ "python3", "main.py" ]

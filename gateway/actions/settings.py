@@ -18,8 +18,7 @@ def authenticate(service: ILocalSettingsService) -> any:
     # Register itself with the server
     # Provide a password on return 
     try:
-        saved: Tuple(str, str) = service.get_device_id()
+        saved = service.get_device_id()
     except Exception as err:
-        logging.error(err)
         raise err
     return saved[0], saved[1]

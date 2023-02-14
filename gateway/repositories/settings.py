@@ -18,7 +18,7 @@ class ILocalSettingsRepository:
         pass
 
     # Get the device_id from the database
-    def get_device_id(self) -> Tuple[str, str]:
+    def get_device_id(self) -> any:
         pass
 
     # Get the settings from the database
@@ -103,7 +103,7 @@ class LocalSettingsRepository(ILocalSettingsRepository):
             f"Settings just got saved into the database table={self._settings_db}")
         return
 
-    def get_device_id(self) -> Tuple[str, str]:
+    def get_device_id(self) -> any:
         if self._initialized == False:
             raise Exception("Table has not been initialized")
         try:
@@ -114,6 +114,7 @@ class LocalSettingsRepository(ILocalSettingsRepository):
         except Exception as err:
             raise err
         device_id: str = ""
+        password: str = ""
         logging.debug(f"Received length={cursor.arraysize}")
         for row in cursor:
             logging.info(

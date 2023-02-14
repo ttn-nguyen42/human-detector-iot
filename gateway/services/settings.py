@@ -6,13 +6,13 @@ Update settings, device_id and perform necessary changes to the YoloBit device
 
 from ast import Tuple
 import logging
-from gateway.services.backend import IRemoteBackendService
+from services.backend import IRemoteBackendService
 from repositories.settings import ILocalSettingsRepository, LocalSettingsRepository
 from utils.utils import make_device_id
 
 
 class ILocalSettingsService:
-    def get_device_id(self) -> Tuple(str, str):
+    def get_device_id(self) -> any:
         pass
 
 
@@ -27,7 +27,7 @@ class LocalSettingsService(ILocalSettingsService):
         self._backend_service = be_service
         return
 
-    def get_device_id(self) -> str:
+    def get_device_id(self) -> any:
         try:
             saved_id, saved_password = self._local_repository.get_device_id()
         except Exception as err:
@@ -40,12 +40,10 @@ class LocalSettingsService(ILocalSettingsService):
         try:
             received_pass = self._backend_service.authenticate(saved_id)
         except Exception as err:
-            logging.error(err)
             raise err
         try:
             self._local_repository.save_device_id(
                 saved_id, received_pass, "YoloBit Human Detector")
         except Exception as err:
-            logging.error(err)
             raise err
         return saved_id, received_pass

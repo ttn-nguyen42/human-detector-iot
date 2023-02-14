@@ -31,7 +31,7 @@ def get_backend_url() -> str:
     return url
 
 def get_backend_port() -> int:
-    port = os.environ.get(ENV_BACKEND_URL)
+    port = os.environ.get(ENV_BACKEND_PORT)
     if len(port) == 0:
         return 0
     return int(port)

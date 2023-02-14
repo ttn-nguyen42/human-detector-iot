@@ -43,34 +43,39 @@ def main():
             logging.fatal("Missing environment variables")
             # If environment variables are not found, simply exit the program
             sys.exit()
-            
+
         # Connecting to the database
         db: SQLDatabase = SqliteDatabase(sqlite_db_name).connect()
         local_db_repository: ILocalSettingsRepository = LocalSettingsRepository(
             database=db
         ).initialize()
-        
+
         # Establish HTTPS connection
         http_con: http.client.HTTPConnection = None
         port = None
         if backend_port != 0:
             port = backend_port
+        conn_str = ""
         if "https" in backend_url:
-            http_con = http.client.HTTPSConnection(backend_url, port, timeout=5)
+            conn_str = backend_url.replace("https://", "")
+            http_con = http.client.HTTPSConnection(
+                conn_str, port, timeout=5)
         else:
-            http_con = http.client.HTTPConnection(backend_url, port, timeout=5)
+            conn_str = backend_url.replace("http://", "")
+            http_con = http.client.HTTPConnection(conn_str, port, timeout=5)
+        logging.debug(f"Connecting to {backend_url}:{port}")
         remote_backend_service: IRemoteBackendService = RemoteBackendService(
             # Should inject HTTP client here
             http_con=http_con
         )
-        
+
         local_db_service: ILocalSettingsService = LocalSettingsService(
             local_repository=local_db_repository,
             be_service=remote_backend_service
         )
 
         # Should be authenticating to the backend
-        
+
         # This will create/retrieve a device_id, then send it to the backend
         # The backend will returns a password associated with this device
         try:
@@ -78,18 +83,22 @@ def main():
                 service=local_db_service,
             )
         except Exception as err:
+            logging.info(
+                "Cannot connect with the backend, probably because it is not available")
             logging.debug(err)
-            raise KeyboardInterrupt
-        
-        logging.info("Use this credentials to authenticate on web app and monitor this device")
+            db.close()
+            sys.exit()
+
+        logging.info(
+            "Use this credentials to authenticate on web app and monitor this device")
         logging.info(f"Device ID: {id}")
         logging.info(f"Password: {password}")
-        
+
         # The password and device_id acts as a username and password
         # that we can use in the web app to determine which device that we want to read data from and change settings for
 
         # Register and connect to cloud services here
-        # 
+        #
         # Example using AWS IoT SDK
         # aws_mqtt: MQTTBroker = IotCoreMQTT(
         #     endpoint_url=endpoint_url,
@@ -110,6 +119,7 @@ def main():
         except Exception as con_err:
             logging.error(con_err)
             logging.fatal("Unable to connect to message broker after retries")
+            db.close()
             sys.exit()
 
         # Initializes repository layers here
@@ -135,7 +145,9 @@ def main():
             register_command_subscriber(id, command_service)
             register_settings_subcriber(id, command_service)
         except Exception as err:
-            raise KeyboardInterrupt
+            db.close()
+            aws_mqtt.close()
+            sys.exit()
 
         # Listen to sensor data from YoloBit
         # Then sends that to the service layer
@@ -144,10 +156,7 @@ def main():
         send_sensor_data(id, sensor_data_service)
         return 0
     except KeyboardInterrupt:
-        exit()
-    finally:
-        db.close()
-        aws_mqtt.disconnect()
+        sys.exit()
 
 
 if __name__ == "__main__":

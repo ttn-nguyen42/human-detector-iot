@@ -1,0 +1,44 @@
+version: '3.9'
+
+services:
+  #
+  # Backend
+  #
+  backend:
+    image: hd_iot/backend:latest
+    build:
+      context: ./api
+      dockerfile: ./Dockerfile
+    env_file:
+      - ./api/.env
+    ports:
+      - 8080:8080
+    healthcheck:
+      test: "curl -iL -XGET -H 'X-Check: healthcheck' http://localhost:8080"
+      interval: 10s # Wait 10s before gateway can starts, then send healthcheck every 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+  #
+  # IoT Gateway
+  #
+  gateway:
+    image: hd_iot/gateway:latest
+    build:
+      context: ./gateway
+      dockerfile: ./Dockerfile
+    env_file:
+      - ./gateway/.env
+    environment:
+      - URL_BACKEND=http://backend
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - gateway_data:/gateway/db:rw
+  #
+  # Web app
+  # UNIMPLEMENTED
+  #
+volumes:
+  gateway_data:

@@ -41,6 +41,23 @@ Không thành công (`password` sai, `device_id` không tồn tại,...) , trả
 }
 ```
 ### `GET api/backend/data`
-Unimplemented. Will use `text/event-stream` for real-time data.
-### `GET api/backend/settings/data_rate`
+**Quan trọng**: Sử dụng `text/event-stream` ([HTTP SSE](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events)) thay cho WebSocket để vận chuyển real-time data
+Lấy dữ liệu trực tiếp từ AWS IoT Core, real-time.
+#### **Header**
+Yêu cầu header:
+- `Content-Type: application/json`
+- `Authorization: Bearer {token}`: `{token}` lấy từ response của API `POST /api/backend/login`
+
+#### **Body**
+Không yêu cầu body cho các `GET` requests.
+#### **Response**
+Trả về dữ liệu từ sensor data của thiết bị, liên tục, theo interval được set thông qua settings.
+```
+{
+	"heat_level": 10,
+	"light_level": 10,
+	"device_id": "ID_that_Gateway_creates_on_first_run",
+	"timestamp": 1676347580.9927943
+}
+```
 Unimplemented

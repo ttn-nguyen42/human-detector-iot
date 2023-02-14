@@ -62,10 +62,13 @@ Trả về dữ liệu từ sensor data của thiết bị, liên tục, theo in
 ```
 ### `POST /api/backend/settings/data_rate`
 Thay đổi data rate của device
+
 Unimplemented
 ### `GET /api/backend/settings`
 Lấy các settings của device và web app
+
 Unimplemented
 ### `POST /api/backend/settings`
 Thay đổi settings của device và web app
+
 Unimplemented

@@ -60,4 +60,12 @@ Trả về dữ liệu từ sensor data của thiết bị, liên tục, theo in
 	"timestamp": 1676347580.9927943
 }
 ```
+### `POST /api/backend/settings/data_rate`
+Thay đổi data rate của device
+Unimplemented
+### `GET /api/backend/settings`
+Lấy các settings của device và web app
+Unimplemented
+### `POST /api/backend/settings`
+Thay đổi settings của device và web app
 Unimplemented

@@ -1,3 +1,4 @@
 awscrt==0.16.9
 awsiotsdk==1.12.4
 paho-mqtt==1.6.1
+pyserial==3.4

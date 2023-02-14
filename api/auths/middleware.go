@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 type MessageResponse struct {
@@ -14,10 +15,11 @@ type MessageResponse struct {
 func JwtAuthMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		bearer := ctx.Request.Header["Authorization"]
-		if len(bearer) > 0 {
+		if len(bearer) > 1 {
 			ctx.JSON(http.StatusBadRequest, MessageResponse{
 				Message: "Authorization header must only have one value",
 			})
+			ctx.Abort()
 			return
 		}
 		token := bearer[0]
@@ -25,13 +27,18 @@ func JwtAuthMiddleware() gin.HandlerFunc {
 			ctx.JSON(http.StatusBadRequest, MessageResponse{
 				Message: "Authorization token must starts with 'Bearer '",
 			})
+			ctx.Abort()
 			return
 		}
-		deviceId, err := VerifyToken(token)
+		_, trimmed, _ := strings.Cut(token, "Bearer ")
+		logrus.Debug(trimmed)
+		deviceId, err := VerifyToken(trimmed)
 		if err != nil {
+			logrus.Debug(err.Error())
 			ctx.JSON(http.StatusUnauthorized, MessageResponse{
 				Message: "Invalid authorization token",
 			})
+			ctx.Abort()
 			return
 		}
 		// Pass the extracted device_id to handlers

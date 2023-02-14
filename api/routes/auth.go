@@ -36,7 +36,9 @@ func POSTLogin(service services.DeviceInfoService) gin.HandlerFunc {
 			return
 		}
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, MessageInternalServerError)
+			ctx.JSON(http.StatusInternalServerError, MessageResponse{
+				Message: "Internal Server Error",
+			})
 		}
 		ctx.JSON(http.StatusOK, res)
 	}

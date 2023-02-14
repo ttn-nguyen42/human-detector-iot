@@ -31,4 +31,8 @@ ENV JWT_SECRET=
 
 WORKDIR /root/
 COPY --from=0 ${SRC_PATH}/api_server ./
+COPY ./certs/ ./certs/
+
+RUN apk add curl
+
 CMD [ "./api_server" ]

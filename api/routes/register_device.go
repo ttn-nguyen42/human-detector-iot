@@ -28,8 +28,9 @@ func POSTRegisterDevice(service services.DeviceInfoService) gin.HandlerFunc {
 
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, MessageResponse{
-				Message: err.Error(),
+				Message: "Invalid request body",
 			})
+			return
 		}
 
 		req, err := service.CreatePassword(&postRequest)

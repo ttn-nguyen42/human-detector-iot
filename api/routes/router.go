@@ -4,9 +4,12 @@ import (
 	"iot_api/auths"
 	"iot_api/database"
 	"iot_api/models"
+	"iot_api/network"
 	"iot_api/repositories"
 	"iot_api/services"
+	"net/http"
 
+	healthcheck "github.com/RaMin0/gin-health-check"
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,7 +24,16 @@ func Create(engine *gin.Engine) {
 	// Returns 500 on panic()
 	engine.Use(gin.Recovery())
 
+	// Healthcheck
+	engine.Use(healthcheck.New(healthcheck.Config{
+		HeaderName: "X-Check",
+		HeaderValue: "healthcheck",
+		ResponseCode: http.StatusTeapot,
+		ResponseText: "im a teapot",
+	}))
+
 	dbClient := database.GetClient()
+	network.GetClient()
 
 	// Device Info collection
 	deviceInfoCol := &database.MongoCollection[models.DeviceCredentials]{

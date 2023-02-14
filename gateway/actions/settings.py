@@ -4,6 +4,7 @@ Created: nguyen_tran
 Perform settings related actions
 """
 
+from ast import Tuple
 import logging
 from services.backend import IRemoteBackendService
 from services.settings import ILocalSettingsService
@@ -12,18 +13,12 @@ from utils.utils import make_device_id
 DEVICE_MODEL = "YoloBit Human Detector"
 
 
-def authenticate(service: ILocalSettingsService, backend: IRemoteBackendService) -> any:
+def authenticate(service: ILocalSettingsService) -> any:
+    # Generate a device ID on first run
+    # Register itself with the server
+    # Provide a password on return 
     try:
-        saved_id: str = service.get_device_id()
+        saved = service.get_device_id()
     except Exception as err:
-        logging.error(err)
         raise err
-    # Should be authenticating against the back-end here
-    # POST /api/v1/register_device
-    # { "device_id": "something". "model": "YoloBit" }
-    try:
-        saved_password: str = backend.authenticate(saved_id, DEVICE_MODEL)
-    except Exception as err:
-        logging.error(err)
-        raise err
-    return (saved_id, saved_password)
+    return saved[0], saved[1]

@@ -1,3 +1,4 @@
+from ast import Tuple
 import logging
 from database.sqlite import SQLDatabase
 from models.settings import DeviceSettings
@@ -9,7 +10,7 @@ class ILocalSettingsRepository:
         pass
 
     # Save the device_id into the table for it
-    def save_device_id(self, device_id: str, model: str) -> None:
+    def save_device_id(self, device_id: str, password: str, model: str) -> None:
         pass
 
     # Save the settings into the table for it
@@ -17,7 +18,7 @@ class ILocalSettingsRepository:
         pass
 
     # Get the device_id from the database
-    def get_device_id(self) -> str:
+    def get_device_id(self) -> any:
         pass
 
     # Get the settings from the database
@@ -46,6 +47,7 @@ class LocalSettingsRepository(ILocalSettingsRepository):
             self._database.execute(f"""CREATE TABLE IF NOT EXISTS {self._device_info_db} (
                                 id              INTEGER PRIMARY KEY NOT NULL,
                                 device_id       TEXT NOT NULL,
+                                password        TEXT NOT NULL,
                                 model           TEXT        
                                );                      
                                """)
@@ -69,14 +71,14 @@ class LocalSettingsRepository(ILocalSettingsRepository):
         self._initialized = True
         return self
 
-    def save_device_id(self, device_id: str, model: str) -> None:
+    def save_device_id(self, device_id: str, password: str, model: str) -> None:
         if self._initialized == False:
             raise Exception("Table has not been initialized")
         try:
             self._database.execute(f"""INSERT OR REPLACE INTO {self._device_info_db}
-                               (id, device_id, model)
+                               (id, device_id, password, model)
                                VALUES
-                               ({1}, "{device_id}", "{model}");
+                               ({1}, "{device_id}", "{password}", "{model}");
                                """)
             self._database.commit()
         except Exception as err:
@@ -101,7 +103,7 @@ class LocalSettingsRepository(ILocalSettingsRepository):
             f"Settings just got saved into the database table={self._settings_db}")
         return
 
-    def get_device_id(self) -> str:
+    def get_device_id(self) -> any:
         if self._initialized == False:
             raise Exception("Table has not been initialized")
         try:
@@ -112,13 +114,15 @@ class LocalSettingsRepository(ILocalSettingsRepository):
         except Exception as err:
             raise err
         device_id: str = ""
+        password: str = ""
         logging.debug(f"Received length={cursor.arraysize}")
         for row in cursor:
             logging.info(
-                f"Table={self._device_info_db} device_id={row[1]} model={row[2]}")
+                f"Table={self._device_info_db} device_id={row[1]} model={row[3]}")
             device_id = row[1]
+            password = row[2]
 
-        return device_id
+        return device_id, password
 
     def get_settings(self) -> DeviceSettings:
         if self._initialized == False:

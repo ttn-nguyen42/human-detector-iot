@@ -6,4 +6,13 @@ Detects human using IoT devices. This repository includes:
 4. A web application for user interaction
 
 # Architecture
-![Architecture design](Architecture.drawio.png)
+![Architecture design](./docs/images/architecture.drawio.png)
+
+# Sử dụng Docker Compose
+Để khởi động & setup tất cả service cùng lúc.
+
+**Lưu ý**: Đọc tất cả các `README.md` trong `api`, `gateway`, `app` trước.
+Tại project root (tại nơi chứa `README.md` này)
+```
+docker compose up --build
+```

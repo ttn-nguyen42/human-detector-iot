@@ -2,7 +2,8 @@ import logging
 import os
 import sqlite3
 
-ENV_SQLITE_DATABASE="SQLITE_DATABASE"
+ENV_SQLITE_DATABASE = "SQLITE_DATABASE"
+
 
 def get_sqlite_database() -> str:
     # Reads SQLITE_DATABASE environment variable
@@ -10,6 +11,7 @@ def get_sqlite_database() -> str:
     if len(res) == 0:
         raise Exception("SQLite database environment variable not found")
     return res
+
 
 class SQLDatabase:
     # Interface for databases
@@ -49,11 +51,11 @@ class SqliteDatabase(SQLDatabase):
         except Exception as err:
             raise err
         return cursor
-    
+
     def commit(self) -> None:
         self._conn.commit()
         return
-    
+
     def close(self) -> None:
         self._conn.close()
         logging.info("SQLite database connection closed")

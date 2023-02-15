@@ -38,6 +38,16 @@ class MQTTBroker:
         pass
 
 
+def _on_publish(client, userdata, message_id) -> None:
+    logging.debug("Published message ID={0} success".format(message_id))
+    return
+
+
+def _on_subscribe(client, userdata, mid, granted_qos) -> None:
+    logging.debug("Subscribed ID={0}, QoS={1}".format(mid, granted_qos[0]))
+    return
+
+
 class PahoMQTT(MQTTBroker):
     # Implements MQTTBroker
     _is_connected: bool = False
@@ -74,14 +84,6 @@ class PahoMQTT(MQTTBroker):
         logging.debug("Disconnected result={0}".format(rc))
         return
 
-    def _on_subscribe(self, client, userdata, mid, granted_qos) -> None:
-        logging.debug("Subscribed ID={0}, QoS={1}".format(mid, granted_qos[0]))
-        return
-
-    def _on_publish(self, client, userdata, message_id) -> None:
-        logging.debug("Published message ID={0} success".format(message_id))
-        return
-
     # Initiates a connection with the MQTT broker
     def connect(self) -> None:
         result = self._client.connect(
@@ -100,7 +102,7 @@ class PahoMQTT(MQTTBroker):
 
     # Publish a message to the broker
     def publish(self, topic: str, payload: typing.Dict[str, any]) -> None:
-        self._client.on_publish = self._on_publish
+        self._client.on_publish = _on_publish
         result = self._client.publish(
             topic=topic, payload=json.dumps(payload), qos=1)
         try:
@@ -116,7 +118,7 @@ class PahoMQTT(MQTTBroker):
 
     def subscribe(self, topic: str, func: callable) -> None:
         self._client.message_callback_add(topic, func)
-        self._client.on_subscribe = self._on_subscribe
+        self._client.on_subscribe = _on_subscribe
         result, _ = self._client.subscribe(topic=topic)
         if result == paho.MQTT_ERR_SUCCESS:
             logging.info(f"Subscribed to topic {topic}")

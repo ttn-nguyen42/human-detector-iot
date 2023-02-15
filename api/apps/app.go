@@ -13,27 +13,24 @@ import (
 
 type App interface {
 	Start() error
-	Stop() error
+	Stop(timeoutCtx context.Context) error
 }
 
 type app struct {
 	Server *http.Server
 }
 
-func New() app {
+func New() App {
 	router := gin.New()
-
-	// Setup API routes
 	routes.Create(router)
 
 	port := utils.GetPort()
-
 	server := &http.Server{
-		Addr: fmt.Sprintf(":%v", port),
+		Addr:    fmt.Sprintf(":%v", port),
 		Handler: router,
 	}
 
-	return app{
+	return &app{
 		Server: server,
 	}
 }

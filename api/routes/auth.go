@@ -10,12 +10,7 @@ import (
 )
 
 /*
-For web app
 POST /api/backend/login
-Body {
-	"device_id": "something",
-	"password": "rawPassword"
-}
 Returns a JWT token that will be used to authenticate other requests
 */
 func POSTLogin(service services.DeviceInfoService) gin.HandlerFunc {

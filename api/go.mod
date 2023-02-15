@@ -4,7 +4,7 @@ go 1.19
 
 require github.com/gin-gonic/gin v1.8.2
 
-require github.com/RaMin0/gin-health-check v0.0.0-20180807004848-a677317b3f01 // indirect
+require github.com/RaMin0/gin-health-check v0.0.0-20180807004848-a677317b3f01
 
 require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible

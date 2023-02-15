@@ -7,7 +7,7 @@ Update settings, device_id and perform necessary changes to the YoloBit device
 from ast import Tuple
 import logging
 from services.backend import IRemoteBackendService
-from repositories.settings import ILocalSettingsRepository, LocalSettingsRepository
+from repositories.settings import ILocalSettingsRepository
 from utils.utils import make_device_id
 
 
@@ -22,7 +22,7 @@ class LocalSettingsService(ILocalSettingsService):
     _local_repository: ILocalSettingsRepository = None
     _backend_service: IRemoteBackendService = None
 
-    def __init__(self, local_repository: LocalSettingsRepository, be_service: IRemoteBackendService) -> None:
+    def __init__(self, local_repository: ILocalSettingsRepository, be_service: IRemoteBackendService) -> None:
         self._local_repository = local_repository
         self._backend_service = be_service
         return

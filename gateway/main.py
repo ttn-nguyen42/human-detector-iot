@@ -23,6 +23,7 @@ from repositories.settings import ILocalSettingsRepository, LocalSettingsReposit
 from services.backend import IRemoteBackendService, RemoteBackendService
 from services.command import CommandService, ICommandService
 from services.sensor_data import ISensorDataService, SensorDataService
+from services.serial_data import ISerialService, SerialService
 from services.settings import ILocalSettingsService, LocalSettingsService
 from utils.utils import get_backend_port, get_backend_url, get_log_level
 
@@ -43,6 +44,10 @@ def main():
             logging.fatal("Missing environment variables")
             # If environment variables are not found, simply exit the program
             sys.exit()
+        
+        # Serial data
+        serial_con: ISerialService = SerialService("")
+        serial_con.connect()
 
         # Connecting to the database
         db: SQLDatabase = SqliteDatabase(sqlite_db_name).connect()
@@ -51,9 +56,9 @@ def main():
         ).initialize()
 
         # Establish HTTPS connection
-        http_con: http.client.HTTPConnection = None
+        http_con: http.client.HTTPConnection
         port = None
-        if backend_port != 0:
+        if backend_port is not 0:
             port = backend_port
         conn_str = ""
         if "https" in backend_url:
@@ -77,9 +82,9 @@ def main():
         # Should be authenticating to the backend
 
         # This will create/retrieve a device_id, then send it to the backend
-        # The backend will returns a password associated with this device
+        #  will return a password associated with this device
         try:
-            id, password = authenticate(
+            device_id, password = authenticate(
                 service=local_db_service,
             )
         except Exception as err:
@@ -91,11 +96,11 @@ def main():
 
         logging.info(
             "Use this credentials to authenticate on web app and monitor this device")
-        logging.info(f"Device ID: {id}")
+        logging.info(f"Device ID: {device_id}")
         logging.info(f"Password: {password}")
 
-        # The password and device_id acts as a username and password
-        # that we can use in the web app to determine which device that we want to read data from and change settings for
+        # The password and device_id acts as a username and password that we can use in the web app to determine
+        # which device that we want to read data from and change settings for
 
         # Register and connect to cloud services here
         #
@@ -144,9 +149,9 @@ def main():
         try:
             register_command_subscriber(id, command_service)
             register_settings_subcriber(id, command_service)
-        except Exception as err:
+        except Exception:
             db.close()
-            aws_mqtt.close()
+            aws_mqtt.disconnect()
             sys.exit()
 
         # Listen to sensor data from YoloBit

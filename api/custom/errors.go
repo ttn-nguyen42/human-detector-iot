@@ -68,7 +68,7 @@ func (e *FieldMissingError) Error() string {
 }
 
 /*
-An use-case to a 400 Bad Request error, 
+An use-case to a 400 Bad Request error,
 specifying a failed attempt to parse an incorrect ID from user
 */
 type BadIdError struct {
@@ -88,7 +88,7 @@ func (e *BadIdError) Error() string {
 }
 
 /*
-An use-case to a 400 Bad Request error, 
+An use-case to a 400 Bad Request error,
 specifying a failed attempt to parse an incorrect query from user
 */
 type BadQueryError struct {

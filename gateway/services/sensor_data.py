@@ -18,11 +18,11 @@ class ISensorDataService:
 class SensorDataService(ISensorDataService):
     # Implements ISensorDataService
     
-    _sensor_data_repostory: ISensorDataRepository = None
+    _sensor_data_repository: ISensorDataRepository = None
 
     def __init__(self, sensor_data_repository: ISensorDataRepository) -> None:
         # Dependency injection
-        self._sensor_data_repostory = sensor_data_repository
+        self._sensor_data_repository = sensor_data_repository
 
     def send_sensor_data(self, data: SensorDataDto) -> None:
         # The service layer implements all business logic
@@ -41,5 +41,5 @@ class SensorDataService(ISensorDataService):
             # Additional business logic added here that differs entity (SensorData) from dto (SensorDataDto)
             timestamp=time.time()
         )
-        self._sensor_data_repostory.send_sensor_packet(entity)
+        self._sensor_data_repository.send_sensor_packet(entity)
         return

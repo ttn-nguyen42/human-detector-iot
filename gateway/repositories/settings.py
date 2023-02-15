@@ -72,7 +72,7 @@ class LocalSettingsRepository(ILocalSettingsRepository):
         return self
 
     def save_device_id(self, device_id: str, password: str, model: str) -> None:
-        if self._initialized == False:
+        if self._initialized is False:
             raise Exception("Table has not been initialized")
         try:
             self._database.execute(f"""INSERT OR REPLACE INTO {self._device_info_db}
@@ -88,7 +88,7 @@ class LocalSettingsRepository(ILocalSettingsRepository):
         return
 
     def save_settings(self, device_id: str, settings: DeviceSettings) -> None:
-        if self._initialized == False:
+        if self._initialized is False:
             raise Exception("Table has not been initialized")
         try:
             self._database.execute(f"""INSERT OR REPLACE INTO {self._settings_db}
@@ -104,7 +104,7 @@ class LocalSettingsRepository(ILocalSettingsRepository):
         return
 
     def get_device_id(self) -> any:
-        if self._initialized == False:
+        if self._initialized is False:
             raise Exception("Table has not been initialized")
         try:
             cursor = self._database.execute(f"""
@@ -125,7 +125,7 @@ class LocalSettingsRepository(ILocalSettingsRepository):
         return device_id, password
 
     def get_settings(self) -> DeviceSettings:
-        if self._initialized == False:
+        if self._initialized is False:
             raise Exception("Table has not been initialized")
 
         try:

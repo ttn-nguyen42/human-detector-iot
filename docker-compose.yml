@@ -12,7 +12,7 @@ services:
     env_file:
       - ./api/.env
     ports:
-      - 8080:8080
+      - "8080:8080"
     healthcheck:
       test: "curl -iL -XGET -H 'X-Check: healthcheck' http://localhost:8080"
       interval: 10s # Wait 10s before gateway can starts, then send healthcheck every 10s

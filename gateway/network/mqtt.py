@@ -129,14 +129,14 @@ class PahoMQTT(MQTTBroker):
         self.disconnect()
         return
 
-#
-# Not used
-#
 
 
 class IotCoreMQTT(MQTTBroker):
     # Implements MQTTBroker
-
+    
+    #
+    # Not used
+    #
     _connection: mqtt.Connection = None
     _is_connected: bool = False
     _lock: Lock = Lock()

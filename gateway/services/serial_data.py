@@ -40,15 +40,23 @@ class SerialService(ISerialService):
                 return port
         return ""
 
-    def read(self) -> str:
+    def read(self) -> list[str]:
         if self._serial is None:
             raise Exception("Serial has not been initialized")
         readable: str = self._serial.in_waiting()
+        result = []
         if readable > 0:
-            result: str = self._serial.read(readable).decode('utf-8')
-            start = result.replace("!", "")
-            end = result.replace("#", "")
-            # Gets clean result string here
+            raw_seq: str = self._serial.read(readable).decode('utf-8')
+            while ('#' in raw_seq) and ('!' in raw_seq):
+                start = raw_seq.find('!')
+                end = raw_seq.find('#')
+                if start < 0 or end < 0:
+                    return result
+                result.append(raw_seq[start:end +1])
+                if end == len(raw_seq):
+                    raw_seq = ""
+                    continue
+                raw_seq = raw_seq[end + 1:]
         return result
 
     def write(self, payload: any) -> None:

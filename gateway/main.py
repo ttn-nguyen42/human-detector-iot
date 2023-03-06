@@ -10,6 +10,7 @@
 import http.client
 import logging
 import sys
+import threading
 from database.sqlite import SQLDatabase, SqliteDatabase, get_sqlite_database
 from network.aws import Certs, get_certs_path, get_url_endpoint
 from network.mqtt import MQTTBroker
@@ -44,10 +45,13 @@ def main():
             logging.fatal("Missing environment variables")
             # If environment variables are not found, simply exit the program
             sys.exit()
-        
+
         # Serial data
-        serial_con: ISerialService = SerialService("")
-        serial_con.connect()
+        try:
+            serial_con: ISerialService = SerialService("")
+            serial_con.connect()
+        except Exception as e:
+            logging.error(e)
 
         # Connecting to the database
         db: SQLDatabase = SqliteDatabase(sqlite_db_name).connect()
@@ -105,13 +109,6 @@ def main():
         # Register and connect to cloud services here
         #
         # Example using AWS IoT SDK
-        # aws_mqtt: MQTTBroker = IotCoreMQTT(
-        #     endpoint_url=endpoint_url,
-        #     ca_filepath=certs.ca,
-        #     private_key_filepath=certs.private_key,
-        #     cert_filepath=certs.cert,
-        #     client_id=id
-        # )
         aws_mqtt: MQTTBroker = PahoMQTT(
             ca_path=certs.ca,
             cert_path=certs.cert,
@@ -147,8 +144,8 @@ def main():
 
         # Listen to commands
         try:
-            register_command_subscriber(id, command_service)
-            register_settings_subcriber(id, command_service)
+            register_command_subscriber(id, command_service, sensor_data_service)
+            register_settings_subcriber(id, command_service, sensor_data_service)
         except Exception:
             db.close()
             aws_mqtt.disconnect()

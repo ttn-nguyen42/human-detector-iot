@@ -18,7 +18,7 @@ class SerialService(ISerialService):
     _port = None
 
     def __init__(self, port: str) -> None:
-        if len(port) is not 0 and port is not None:
+        if len(port) != 0 and port != None:
             self._port = port
         else:
             self._port = self._find_ports()
@@ -40,7 +40,7 @@ class SerialService(ISerialService):
                 return port
         return ""
 
-    def read(self) -> list[str]:
+    def read(self):
         if self._serial is None:
             raise Exception("Serial has not been initialized")
         readable: str = self._serial.in_waiting()

@@ -6,8 +6,9 @@ Listens to data from YoloBit controller through Serial (USB)
 
 import logging
 import time
+from typing import List
 from dto.sensor_data import SensorDataDto
-from gateway.services.serial_data import ISerialService
+from services.serial_data import ISerialService
 from services.sensor_data import ISensorDataService
 
 
@@ -29,7 +30,7 @@ def _read_sensor_data(serial: ISerialService) -> SensorDataDto:
     _process_data(res=res)
     
 
-def _process_data(res: list[str]) -> SensorDataDto:
+def _process_data(res: List[str]) -> SensorDataDto:
     return SensorDataDto(
         device_id="",
         heat_level=10,

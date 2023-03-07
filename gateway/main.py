@@ -41,67 +41,47 @@ def main():
             backend_port: int = get_backend_port()
         except Exception as env_err:
             # Print out exception message
-            logging.error(env_err)
-            logging.fatal("Missing environment variables")
+            logging.fatal("Missing environment variables: {0}".format(env_err))
             # If environment variables are not found, simply exit the program
             sys.exit()
 
+        # Establish HTTPS connection
+        http_con: http.client.HTTPConnection
+        port = None
+        if backend_port != 0:
+            port = backend_port
+        conn_str = ""
+        if "https" in backend_url:
+            conn_str = backend_url.replace("https://", "")
+            http_con = http.client.HTTPSConnection(conn_str, port, timeout=5)
+        else:
+            conn_str = backend_url.replace("http://", "")
+            http_con = http.client.HTTPConnection(conn_str, port, timeout=5)
+            logging.debug(f"Connecting to {backend_url}:{port}")
+            remote_backend_service: IRemoteBackendService = RemoteBackendService(
+            # Should inject HTTP client here
+            http_con=http_con
+        )
+        
         # Serial data
+        # Will fails when no connected device is found
         try:
             serial_con: ISerialService = SerialService("")
             serial_con.connect()
         except Exception as e:
-            logging.error(e)
-
+            logging.info("Unable to find serial IOT device: {0}".format(e))
+            sys.exit()
+        
         # Connecting to the database
         db: SQLDatabase = SqliteDatabase(sqlite_db_name).connect()
         local_db_repository: ILocalSettingsRepository = LocalSettingsRepository(
             database=db
         ).initialize()
 
-        # Establish HTTPS connection
-        http_con: http.client.HTTPConnection
-        port = None
-        if backend_port is not 0:
-            port = backend_port
-        conn_str = ""
-        if "https" in backend_url:
-            conn_str = backend_url.replace("https://", "")
-            http_con = http.client.HTTPSConnection(
-                conn_str, port, timeout=5)
-        else:
-            conn_str = backend_url.replace("http://", "")
-            http_con = http.client.HTTPConnection(conn_str, port, timeout=5)
-        logging.debug(f"Connecting to {backend_url}:{port}")
-        remote_backend_service: IRemoteBackendService = RemoteBackendService(
-            # Should inject HTTP client here
-            http_con=http_con
-        )
-
         local_db_service: ILocalSettingsService = LocalSettingsService(
             local_repository=local_db_repository,
             be_service=remote_backend_service
         )
-
-        # Should be authenticating to the backend
-
-        # This will create/retrieve a device_id, then send it to the backend
-        #  will return a password associated with this device
-        try:
-            device_id, password = authenticate(
-                service=local_db_service,
-            )
-        except Exception as err:
-            logging.info(
-                "Cannot connect with the backend, probably because it is not available")
-            logging.debug(err)
-            db.close()
-            sys.exit()
-
-        logging.info(
-            "Use this credentials to authenticate on web app and monitor this device")
-        logging.info(f"Device ID: {device_id}")
-        logging.info(f"Password: {password}")
 
         # The password and device_id acts as a username and password that we can use in the web app to determine
         # which device that we want to read data from and change settings for
@@ -115,14 +95,6 @@ def main():
             priv_key_path=certs.private_key,
             endpoint=endpoint_url
         )
-
-        try:
-            aws_mqtt.connect()
-        except Exception as con_err:
-            logging.error(con_err)
-            logging.fatal("Unable to connect to message broker after retries")
-            db.close()
-            sys.exit()
 
         # Initializes repository layers here
         sensor_data_repository: ISensorDataRepository = SensorDataRepository(
@@ -139,17 +111,49 @@ def main():
         )
 
         command_service: ICommandService = CommandService(
-            command_repository=command_repository
+            command_repository=command_repository,
+            serial=serial_con
         )
+        
+        # Connect to AWS MQTT
+        try:
+            aws_mqtt.connect()
+        except Exception as con_err:
+            logging.info(
+                "Unable to connect to message broker after retries: {0}".format(con_err))
+            db.close()
+            sys.exit()
 
         # Listen to commands
         try:
             register_command_subscriber(id, command_service, sensor_data_service)
             register_settings_subcriber(id, command_service, sensor_data_service)
-        except Exception:
+        except Exception as reg_err:
+            logging.info("Unable to register to command and settings topics: {0}".format(reg_err))
             db.close()
             aws_mqtt.disconnect()
             sys.exit()
+            
+        # Authenticating to the backend
+
+        # This will create/retrieve a device_id, then send it to the backend
+        #  will return a password associated with this device
+        try:
+            device_id, password = authenticate(
+                service=local_db_service,
+            )
+        except Exception as err:
+            logging.info(
+                "Cannot connect with the backend: {0}".format(err))
+            db.close()
+            aws_mqtt.disconnect()
+            db.close()
+            sys.exit()
+
+        logging.info(
+            "Use this credentials to authenticate on web app and monitor this device")
+        logging.info(f"Device ID: {device_id}")
+        logging.info(f"Password: {password}")
 
         # Listen to sensor data from YoloBit
         # Then sends that to the service layer

@@ -1,3 +1,6 @@
 .gitignore
 Dockerfile
 go.sum
+README.md
+.env
+.dockerignore

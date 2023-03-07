@@ -6,7 +6,7 @@ Keeps the business logic for handling settings changes from user
 
 import ast
 import logging
-from gateway.services.serial_data import ISerialService
+from services.serial_data import ISerialService
 import models.commands
 from paho.mqtt.client import MQTTMessage
 from repositories.command import ICommandRepository

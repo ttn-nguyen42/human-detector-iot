@@ -4,3 +4,4 @@ certs/human_detector_dev.public.key
 certs/human_detector_dev.private.key
 certs/human_detector_dev.cert.pem
 db
+.idea

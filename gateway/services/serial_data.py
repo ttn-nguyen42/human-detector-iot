@@ -47,9 +47,9 @@ class SerialService(ISerialService):
         result = []
         if readable > 0:
             raw_seq: str = self._serial.read(readable).decode('utf-8')
-            while ('#' in raw_seq) and ('!' in raw_seq):
-                start = raw_seq.find('!')
-                end = raw_seq.find('#')
+            while ('{' in raw_seq) and ('}' in raw_seq):
+                start = raw_seq.find('{')
+                end = raw_seq.find('}')
                 if start < 0 or end < 0:
                     return result
                 result.append(raw_seq[start:end +1])
@@ -57,13 +57,14 @@ class SerialService(ISerialService):
                     raw_seq = ""
                     continue
                 raw_seq = raw_seq[end + 1:]
+        # Returns a JSON
         return result
 
     def write(self, payload: any) -> None:
         if self._serial is None:
             raise Exception("Serial has not been initialized")
         try:
-            self.write((str(payload) + "#").encode())
+            self.write((str(payload)).encode())
         except Exception as err:
             raise err
         return

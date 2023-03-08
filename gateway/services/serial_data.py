@@ -43,7 +43,7 @@ class SerialService(ISerialService):
     def read(self):
         if self._serial is None:
             raise Exception("Serial has not been initialized")
-        readable: str = self._serial.in_waiting()
+        readable: int = self._serial.in_waiting
         result = []
         if readable > 0:
             raw_seq: str = self._serial.read(readable).decode('utf-8')

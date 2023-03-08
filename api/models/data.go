@@ -1,8 +1,9 @@
 package models
 
 type SensorData struct {
-	HeatLevel  int     `json:"heat_level"`
-	LightLevel int     `json:"light_level"`
-	DeviceId   string  `json:"device_id"`
-	Timestamp  float64 `json:"timestamp"`
+	Temperature int     `json:"temp"`
+	Humidity    int     `json:"humidity"`
+	Detected    bool    `json:"detected"`
+	DeviceId    string  `json:"device_id"`
+	Timestamp   float64 `json:"timestamp"`
 }

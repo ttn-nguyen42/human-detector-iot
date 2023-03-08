@@ -16,23 +16,25 @@ from services.sensor_data import ISensorDataService
 # Pause of a second then read serial data from the controller
 # Then sends the received data to the service layer
 def send_sensor_data(device_id: str, service: ISensorDataService, serial: ISerialService) -> None:
-    logging.info(f"Sending sensor data to: 'yolobit/sensor/data/{device_id} ")
+    logging.info(f"Sending sensor data to: 'yolobit/sensor/data/{device_id}")
     while True:
-        data = _read_sensor_data(serial=serial)
-        data.device_id = device_id
-        service.send_sensor_data(data=data)
-        time.sleep(10)
+        logging.info("Read")
+        # Read from serial here
+        res: list[str] = serial.read()
+        for dat in res:
+            try:
+                model = _process_data(res=dat)
+            except Exception as e:
+                logging.info("{0} - {1}".format(e, dat))
+                continue
+            model.device_id = device_id
+            service.send_sensor_data(data=model)
+        time.sleep(2)
+    return
 
-
-def _read_sensor_data(serial: ISerialService) -> SensorDataDto:
-    # Read from serial here
-    res: list[str] = serial.read()
-    _process_data(res=res)
-    
-
-def _process_data(res: List[str]) -> SensorDataDto:
-    return SensorDataDto(
-        device_id="",
-        heat_level=10,
-        light_level=10
-    )
+def _process_data(res: str) -> SensorDataDto:
+    try:
+        model = SensorDataDto(res)
+    except Exception as e:
+        raise e
+    return model

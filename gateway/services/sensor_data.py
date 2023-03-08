@@ -35,9 +35,10 @@ class SensorDataService(ISensorDataService):
         #
         # This is the layered architecture pattern, it offers "seperation of concern"
         entity = SensorData(
+            humidity=data.humidity,
+            temp=data.temp,
+            detected=data.detected,
             device_id=data.device_id,
-            heat_level=data.heat_level,
-            light_level=data.light_level,
             # Additional business logic added here that differs entity (SensorData) from dto (SensorDataDto)
             timestamp=time.time()
         )

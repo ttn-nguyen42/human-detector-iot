@@ -11,21 +11,26 @@ import time
 class SensorData(dict):
     # Represents a sensor data packet that will be sent to the back-end
 
-    heat_level: int = 0
-    light_level: int = 0
-    device_id: str = 0
+    device_id: str = ""
 
-    timestamp: float = 0.0
+    humidity: int = 0
+    temp: int = 0
+    detected: bool = False
+    timestamp: str = ""
 
-    def __init__(self, device_id: str, heat_level: int, light_level: int, timestamp: float) -> None:
-        self.device_id = device_id
-        self.heat_level = heat_level
-        self.light_level = light_level
+    def __init__(self, device_id: str, humidity: int, temp: int, detected: bool, timestamp: str) -> None:
+        self.humidity = humidity
+        self.temp = temp
+        self.detected = detected
         self.timestamp = timestamp
+        self.device_id = device_id
         dict.__init__(
             self,
             device_id=device_id,
-            heat_level=heat_level,
-            light_level=light_level,
+            temp=temp,
+            humidity=humidity,
+            detected=detected,
             timestamp=timestamp
         )
+        
+

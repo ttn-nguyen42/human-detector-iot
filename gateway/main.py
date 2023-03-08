@@ -123,16 +123,6 @@ def main():
                 "Unable to connect to message broker after retries: {0}".format(con_err))
             db.close()
             sys.exit()
-
-        # Listen to commands
-        try:
-            register_command_subscriber(id, command_service, sensor_data_service)
-            register_settings_subcriber(id, command_service, sensor_data_service)
-        except Exception as reg_err:
-            logging.info("Unable to register to command and settings topics: {0}".format(reg_err))
-            db.close()
-            aws_mqtt.disconnect()
-            sys.exit()
             
         # Authenticating to the backend
 
@@ -154,12 +144,23 @@ def main():
             "Use this credentials to authenticate on web app and monitor this device")
         logging.info(f"Device ID: {device_id}")
         logging.info(f"Password: {password}")
+        
+        # Listen to commands
+        try:
+            register_command_subscriber(device_id, command_service)
+            register_settings_subcriber(device_id, command_service)
+        except Exception as reg_err:
+            logging.info("Unable to register to command and settings topics: {0}".format(reg_err))
+            db.close()
+            aws_mqtt.disconnect()
+            sys.exit()
+            
 
         # Listen to sensor data from YoloBit
         # Then sends that to the service layer
         # This acts as a controller layer to complete the MVC architecture
         # Not implemented
-        send_sensor_data(id, sensor_data_service)
+        send_sensor_data(device_id, sensor_data_service, serial_con)
         return 0
     except KeyboardInterrupt:
         sys.exit()

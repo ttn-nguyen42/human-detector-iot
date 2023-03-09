@@ -11,6 +11,8 @@ services:
       dockerfile: ./Dockerfile
     env_file:
       - ./api/.env
+    environment:
+      - TEST_MODE=1
     ports:
       - "8080:8080"
     healthcheck:

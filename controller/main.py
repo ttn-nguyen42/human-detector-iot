@@ -6,32 +6,18 @@ import uasyncio as asyncio
 import dht
 from machine import Pin
 import json
+import music
+from event_manager import *
+import _thread
 
 #
 # Author: nguyen_tran
-# This uses MicroPython as opposed to Python
 #
 
 ##################################################################
 
 
-class ICommunicationService:
-  #
-  # Generic interface for communication methods
-  #
-
-  # Writes to the communication stream
-  def write(self, inp: str):
-    pass
-
-  # Read from the communication stream
-  def read(self) -> str:
-    pass
-
-##################################################################
-
-
-class SerialService(ICommunicationService):
+class SerialService:
   #
   # Through USB serial
   #
@@ -62,43 +48,47 @@ class SerialService(ICommunicationService):
     self._spoll.unregister(sys.stdin)
     return
 
-
-serial_service: ICommunicationService = SerialService()
-
 ##################################################################
 
 
-class ISensorNode:
-  # Gets sensor data
-  def read():
-    pass
+class DHTNode:
+  _dht11 = None
 
-
-class DHTNode(ISensorNode):
-  def __init__(self):
+  def __init__(self, pin: Pin):
+    self._dht11 = dht.DHT11(pin)
     return
 
-  def read():
-    dht11.measure()
+  def read(self):
     # Returns temperature and humidity
-    temp = dht11.temperature()
-    humid = dht11.humidity()
-    return (temp, humid)
+    temp = self._dht11.temperature()
+    humid = self._dht11.humidity()
+    self._dht11.measure()
+    return temp, humid
 
 
-dht_node = DHTNode()
+class DetectorNode:
+  _status = False
 
-
-class DetectorNode(ISensorNode):
-  def __init__():
+  def __init__(self):
+    self._status = False
     return
 
-  def read():
+  def read(self):
     # Check for motion
-    return False
-
-
-detector_node = DetectorNode()
+    sig = pin0.read_analog()
+    if sig > 0:
+      # Found human
+      # Display green circle
+      display.show(Image("00000:04440:04040:04440:00000"))
+      # Play once
+      if self._status == False:
+        music.play(['C6:2'], wait=False)
+      self._status = True
+    else:
+      display.show(Image("00000:01110:01010:01110:00000"))
+      music.stop()
+      self._status = False
+    return sig > 0
 
 ##################################################################
 
@@ -116,50 +106,72 @@ class SensorDto:
 ##################################################################
 
 
-async def send_data(data: SensorDto):
+def send_data(data: SensorDto):
   # Sends as JSON
-  js = json.dumps(data)
+  js = json.dumps(data.__dict__)
   print(js)
   return
 
 
-async def execute_command(command: str):
-  print("Received: {0}".format(task))
+def execute_command(command: str):
+  if command == "A":
+    music.play(['A1:2'], wait=False)
   return
 
 ##################################################################
 
 
-async def read_commands(service: ICommunicationService):
+serial_service = SerialService()
+
+thread_must_stop = False
+
+
+def read_commands():
   while True:
-    task = service.read()
+    # print("Checking command")
+    task = serial_service.read()
     execute_command(task)
-    await asyncio.sleep(500)
+    time.sleep(0.5)
+  return
+
+
+def get_sensor_data(dht_service, detector_service):
+  print("Sending sensor data")
+  while True:
+    if thread_must_stop == True:
+      print("Stop sensor data")
+      return
+    temp, humid = dht_service.read()
+    detected = detector_service.read()
+    dto = SensorDto(temp, humid, detected)
+    send_data(dto)
+    time.sleep(1)
     continue
   return
 
-
-async def get_sensor_data(dht_node: ISensorNode, detector_node: ISensorNode):
-  while True:
-      temp, humid = dht_node.read()
-      detected = detector_node.read()
-      dto = SensorDto(temp, humid, detected)
-      task = asyncio.create_task(send_data(dto))
-      await asyncio.sleep(500)
-      continue
-  return
-
 ##################################################################
 
 
-async def main():
-  # Create tasks
-  # One for reading the commands
-  command_reader = asyncio.create_task(read_commands(serial_service))
-  # One for reading the sensor and send it through serial
-  data_reader = asyncio.create_task(get_sensor_data(dht_node, detector_node))
+def main():
+  # Setup
+  global thread_must_stop
+  dht_node = DHTNode(Pin(pin1.pin))
+  detector_node = DetectorNode()
+
+  # Welcome
+  music.play(music.POWER_UP, wait=True)
+  display.show(Image("00000:01110:01010:01110:00000"))
+  print("Starting")
+
+  # Creating tasks
+  _thread.start_new_thread(get_sensor_data, (dht_node, detector_node))
+  try:
+    read_commands()
+  except KeyboardInterrupt:
+    thread_must_stop = True
+    sys.exit()
   return
 
-##################################################################
 
-asyncio.run(main())
+##################################################################
+main()

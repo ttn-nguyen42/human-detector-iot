@@ -5,7 +5,9 @@ import (
 	"io"
 	"iot_api/models"
 	"iot_api/network"
+	"iot_api/utils"
 	"net/http"
+	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/gin-gonic/gin"
@@ -25,20 +27,38 @@ func GETGetDeviceData() gin.HandlerFunc {
 		}
 		topic := fmt.Sprintf("%v/%v", "yolobit/data/sensor", deviceId)
 		res := make(chan interface{})
-		go func() {
-			network.GetClient().Subscribe(topic, 1, func(c mqtt.Client, m mqtt.Message) {
-				// Is a duplicate
-				if m.Duplicate() {
-					return
+		quit := make(chan bool)
+		if !utils.IsTestMode() {
+			/* If in production mode, subscribes to MQTT server */
+			go func() {
+				network.GetClient().Subscribe(topic, 1, func(c mqtt.Client, m mqtt.Message) {
+					// Is a duplicate
+					if m.Duplicate() {
+						return
+					}
+					var parsedPayload models.SensorData
+					err := models.StructifyBytes(m.Payload(), &parsedPayload)
+					if err != nil {
+						return
+					}
+					res <- parsedPayload
+				})
+			}()
+		} else {
+			/* In test mode, data is generated */
+			go func() {
+				for {
+					select {
+					case <-quit:
+						return
+					default:
+						res <- utils.GetRandomSensorData(deviceId)
+						time.Sleep(time.Second * 2) // Send new data every 2 seconds
+					}
 				}
-				var parsedPayload models.SensorData
-				err := models.StructifyBytes(m.Payload(), &parsedPayload)
-				if err != nil {
-					return
-				}
-				res <- parsedPayload
-			})
-		}()
+			}()
+		}
+
 		ended := ctx.Stream(func(w io.Writer) bool {
 			if data, ok := <-res; ok {
 				ctx.SSEvent("data", data)
@@ -47,6 +67,9 @@ func GETGetDeviceData() gin.HandlerFunc {
 			return false
 		})
 		if ended {
+			network.GetClient().Unsubscribe(topic)
+			quit <- true
+			close(quit)
 			close(res)
 		}
 	}

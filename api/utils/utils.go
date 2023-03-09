@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"iot_api/models"
 	"math/rand"
 	"os"
 	"time"
@@ -20,6 +21,16 @@ func init() {
 func GetRandomUUID() string {
 	id := uuid.New()
 	return id.String()
+}
+
+func GetRandomNumberInRange(start int, end int) int {
+	res := 0
+	if (start >= end) {
+		res = rand.Intn(start - end + 1) + end
+	} else {
+		res = rand.Intn(end - start + 1) + start
+	}
+	return res
 }
 
 // Get port from environment variables
@@ -103,4 +114,28 @@ func GetJwtSignKey() (string, error) {
 
 func GetPasswordHash(raw string) string {
 	return MD5Hash(raw)
+}
+
+/*
+ * In test mode:
+ * - Connections to MongoDB are allowed
+ * - AWS IoT Core is unused
+ * - Data is generated from the backend
+ */
+func IsTestMode() bool {
+	mode := os.Getenv("TEST_MODE")
+	return mode == "1"
+}
+
+/*
+ * Randomly generates data for test mode
+ */
+func GetRandomSensorData(deviceId string) models.SensorData {
+	return models.SensorData{
+		Temperature: GetRandomNumberInRange(18, 35),
+		Humidity: GetRandomNumberInRange(0, 100),
+		Detected: GetRandomNumberInRange(0, 100) > 50,
+		DeviceId: deviceId,
+		Timestamp: float64(time.Now().Unix()),
+	}
 }

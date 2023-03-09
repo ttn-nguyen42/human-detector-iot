@@ -30,6 +30,11 @@ func GetClient() mqtt.Client {
 
 func connect(options *mqtt.ClientOptions) mqtt.Client {
 	client := mqtt.NewClient(options)
+	if utils.IsTestMode() {
+		/* In test mode, connection to MQTT server is not allowed */
+		logrus.Info("Currently in test mode, MQTT server is not needed")
+		return client
+	}
 	token := client.Connect()
 	token.Wait()
 	if token.Error() != nil {
@@ -40,6 +45,10 @@ func connect(options *mqtt.ClientOptions) mqtt.Client {
 }
 
 func getAwsMqttSettings() *mqtt.ClientOptions {
+	if utils.IsTestMode() {
+		logrus.Info("In test mode, skip checking AWS IoT Core credentials")
+		return mqtt.NewClientOptions()
+	}
 	certs, err := utils.GetAWSIoTCertPaths()
 	if err != nil {
 		logrus.Fatal(err.Error())

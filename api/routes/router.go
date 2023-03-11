@@ -55,7 +55,7 @@ func Create(engine *gin.Engine) {
 	// See auths/middleware
 	protected := engine.Group("/api/backend")
 	protected.Use(auths.JwtAuthMiddleware())
-	protected.POST("/settings/data_rate", POSTUpdateDataRate())
+	protected.POST("/settings/data_rate", POSTUpdateDataRate(commandService))
 	protected.GET("/settings", GETGetAllSettings())
 	protected.GET("/data", ssEventHeader(), GETGetDeviceData())
 	protected.GET("/check_active", GetIsDeviceActive(commandService))

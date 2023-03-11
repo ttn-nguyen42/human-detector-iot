@@ -10,12 +10,13 @@ from typing import List
 from dto.sensor_data import SensorDataDto
 from services.serial_data import ISerialService
 from services.sensor_data import ISensorDataService
-
+from dto.commands import DATA_RATE
 
 # Loops indefinitely
 # Pause of a second then read serial data from the controller
 # Then sends the received data to the service layer
 def send_sensor_data(device_id: str, service: ISensorDataService, serial: ISerialService) -> None:
+    global DATA_RATE
     logging.info(f"Sending sensor data to: 'yolobit/sensor/data/{device_id}")
     while True:
         # Read from serial here
@@ -29,7 +30,7 @@ def send_sensor_data(device_id: str, service: ISensorDataService, serial: ISeria
                 continue
             model.device_id = device_id
             service.send_sensor_data(data=model)
-        time.sleep(2)
+        time.sleep(DATA_RATE)
     return
 
 def _process_data(res: str) -> SensorDataDto:

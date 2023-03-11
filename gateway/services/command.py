@@ -12,6 +12,7 @@ from paho.mqtt.client import MQTTMessage
 from repositories.command import ICommandRepository
 import json
 import threading
+from dto.commands import *
 
 
 class ICommandService:
@@ -35,7 +36,8 @@ class CommandService(ICommandService):
     messenger_thread = None
     _lock = None
 
-    def __init__(self, command_repository: ICommandRepository, serial: ISerialService) -> None:
+    def __init__(self, command_repository: ICommandRepository,
+                 serial: ISerialService) -> None:
         self._command_repository = command_repository
         self._serial = serial
         self._lock = threading.Lock()
@@ -75,6 +77,7 @@ class CommandService(ICommandService):
     # Will be executed anytime a command is sent back from the backend
     # through AWS IoT Core
     def _on_command_received(self, client, userdata, message: MQTTMessage):
+        global DATA_RATE
         logging.debug(f"Command ID={message.mid} payload={message.payload}")
         # If the message is a duplicate
         if message.dup is True:
@@ -112,6 +115,23 @@ class CommandService(ICommandService):
                 self._serial.write(ACTIVITY_CHECK)
             except Exception as err:
                 res.result = FAILURE
+            self._lock.acquire()
+            self._message_to_send.append(res)
+            logging.info(f"Added response to queue msg={res}")
+            self._lock.release()
+        if action == CHANGE_RATE:
+            # Received data rate update
+            res: CommandResponse = CommandResponse(action_id=action_id,
+                                                   result=SUCCESS,
+                                                   payload="")
+            try:
+                pl: DataRateCommandSettings = DataRateCommandSettings(payload)
+            except Exception as err:
+                logging.error(
+                    f"Unable to parse data rate command settings err={err}")
+                res.result = FAILURE
+            logging.info(f"Received data rate change to {pl.rate_in_seconds}s")
+            DATA_RATE=pl.rate_in_seconds
             self._lock.acquire()
             self._message_to_send.append(res)
             logging.info(f"Added response to queue msg={res}")

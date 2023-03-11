@@ -76,24 +76,6 @@ func GETGetDeviceData() gin.HandlerFunc {
 }
 
 /*
-POST /api/backend/settings/data_rate
-Requires JWT token. See auths/middleware.go
-*/
-func POSTUpdateDataRate() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		deviceId := ctx.GetString("device_id")
-		if len(deviceId) == 0 {
-			ctx.JSON(http.StatusInternalServerError, MessageInternalServerError)
-			return
-		}
-		// Unimplemented
-		ctx.JSON(http.StatusOK, MessageResponse{
-			Message: "Ok",
-		})
-	}
-}
-
-/*
 GET /api/backend/settings
 Requires JWT token. See auths/middleware.go
 */

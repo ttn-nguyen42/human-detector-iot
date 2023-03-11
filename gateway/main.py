@@ -29,8 +29,8 @@ from services.settings import ILocalSettingsService, LocalSettingsService
 from utils.utils import get_backend_port, get_backend_url, get_log_level
 from models.commands import *
 
-
 def main():
+    global DATA_RATE
     try:
         logging.basicConfig(level=get_log_level())
         # Get environment variables/settings here
@@ -75,6 +75,7 @@ def main():
         
         # Connecting to the database
         db: SQLDatabase = SqliteDatabase(sqlite_db_name).connect()
+        
         local_db_repository: ILocalSettingsRepository = LocalSettingsRepository(
             database=db
         ).initialize()
@@ -83,6 +84,7 @@ def main():
             local_repository=local_db_repository,
             be_service=remote_backend_service
         )
+            
 
         # The password and device_id acts as a username and password that we can use in the web app to determine
         # which device that we want to read data from and change settings for
@@ -138,13 +140,21 @@ def main():
                 "Cannot connect with the backend: {0}".format(err))
             db.close()
             aws_mqtt.disconnect()
-            db.close()
             sys.exit()
 
         logging.info(
             "Use this credentials to authenticate on web app and monitor this device")
         logging.info(f"Device ID: {device_id}")
         logging.info(f"Password: {password}")
+        
+        try:
+            DATA_RATE = local_db_service.get_data_rate(device_id)
+            logging.info(f"Data rate: {DATA_RATE}")
+        except Exception as err:
+            logging.fatal("Unable to get data rate, stopping")
+            db.close()
+            aws_mqtt.disconnect()
+            sys.exit()
         
         # Listen to commands
         try:
@@ -155,7 +165,6 @@ def main():
             aws_mqtt.disconnect()
             sys.exit()
             
-        command_service.send_response(CommandResponse("a", SUCCESS, ""))
         # Listen to sensor data from YoloBit
         # Then sends that to the service layer
         # This acts as a controller layer to complete the MVC architecture

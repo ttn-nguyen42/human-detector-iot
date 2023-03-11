@@ -16,6 +16,7 @@ import (
 type CommandService interface {
 	sendCommand(deviceId string, kind string, payload string) error
 	SendStatusCheck(deviceId string) error
+	SendDataRateUpdate(deviceId string, settings dtos.POSTDataRateRequest) error
 }
 
 type commandService struct {
@@ -35,6 +36,17 @@ func NewCommandService(activityTopic string, responseTopic string) CommandServic
  */
 func (s *commandService) SendStatusCheck(deviceId string) error {
 	return s.sendCommand(deviceId, dtos.ACTCheckActive, "")
+}
+
+/*
+ * Sends a data rate settings to gateway
+ */
+func (s *commandService) SendDataRateUpdate(deviceId string, settings dtos.POSTDataRateRequest) error {
+	str, err := models.Stringify(settings)
+	if err != nil {
+		return custom.NewInvalidFormatError("Provided settings in invalid")
+	}
+	return s.sendCommand(deviceId, dtos.ACTChangeDataRate, str)
 }
 
 func (s *commandService) sendCommand(deviceId string, kind string, payload string) error {

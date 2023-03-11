@@ -7,17 +7,17 @@ Repository layer for listening to backend's command
 
 import logging
 from network.mqtt import MQTTBroker
-
+from models.commands import CommandResponse
+import json
 
 class ICommandRepository:
     # Subcribes to a MQTT topic that listens to commands (shutdown, start,...) between backend and gateway
     def subscribe_command(self, device_id: str, callback: callable) -> None:
         pass
-    
-    # Subscribes to a MQTT topic that transfers settings data between backend and gateway
-    def subscribe_settings(self, device_id: str, callback: callable) -> None:
-        pass
 
+
+    def send_command_response(self, device_id: str, res: CommandResponse) -> None:
+        pass
 
 class CommandRepository(ICommandRepository):
     # Implements ICommandRepository
@@ -37,14 +37,9 @@ class CommandRepository(ICommandRepository):
             logging.error(f"Unable to subscribe to {topic}")
             raise err
         return
-        
-    # Subscribes to a MQTT topic that transfers settings data between backend and gateway
-    def subscribe_settings(self, device_id: str, callback: callable) -> None:
-        topic = f"{self._topic}/settings/{device_id}"
-        try:
-            self._broker.subscribe(topic=topic, func=callback)
-        except Exception as err:
-            logging.error(f"Unable to subscribe to {topic}")
-            raise err
+    
+    def send_command_response(self, device_id: str, res: CommandResponse):
+        topic = f"{self._topic}/response/{device_id}"
+        self._broker.publish(topic=topic, payload=res)
         return
         

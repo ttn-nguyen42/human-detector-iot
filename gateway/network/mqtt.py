@@ -103,10 +103,14 @@ class PahoMQTT(MQTTBroker):
     # Publish a message to the broker
     def publish(self, topic: str, payload: typing.Dict[str, any]) -> None:
         self._client.on_publish = _on_publish
-        result = self._client.publish(
-            topic=topic, payload=json.dumps(payload), qos=1)
         try:
-            result.wait_for_publish()
+            pl = json.dumps(payload)
+            result = self._client.publish(
+                topic=topic, payload=pl)
+        except Exception as err:
+            logging.error(f"Unable to publish err={err}")
+        try:
+            result.wait_for_publish(timeout=5)
         except Exception as err:
             logging.debug(f"Publish topic={topic} not send error={err}")
         logging.info(f"Sent message ID={result.mid} to topic={topic}")

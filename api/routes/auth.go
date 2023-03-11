@@ -23,6 +23,18 @@ func POSTLogin(service services.DeviceInfoService) gin.HandlerFunc {
 			})
 			return
 		}
+		if len(creds.DeviceId) == 0 {
+			ctx.JSON(http.StatusUnauthorized, MessageResponse{
+				Message: "Invalid device_id or password",
+			})
+			return
+		}
+		if len(creds.Password) < 8 {
+			ctx.JSON(http.StatusUnauthorized, MessageResponse{
+				Message: "Invalid device_id or password",
+			})
+			return
+		}
 		res, err := service.AuthenticateByPassword(&creds)
 		if _, ok := err.(*custom.UnauthorizedError); ok {
 			ctx.JSON(http.StatusUnauthorized, MessageResponse{

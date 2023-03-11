@@ -18,9 +18,9 @@ from services.sensor_data import ISensorDataService
 def send_sensor_data(device_id: str, service: ISensorDataService, serial: ISerialService) -> None:
     logging.info(f"Sending sensor data to: 'yolobit/sensor/data/{device_id}")
     while True:
-        logging.info("Read")
         # Read from serial here
         res: list[str] = serial.read()
+        logging.info(f"Read={res}")
         for dat in res:
             try:
                 model = _process_data(res=dat)

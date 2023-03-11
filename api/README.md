@@ -1,6 +1,6 @@
 # API Documentation
 ## Endpoints
-### `POST api/backend/register_device`
+### `POST /api/backend/register_device`
 Đăng kí thiết bị tới backend và nhận lại password tạo bởi backend. Password này sẽ được sử dụng để đăng nhập vào web application.
 IoT Gateway sẽ thực hiện HTTP request tới endpoint khi ở lần chạy đầu tiên. Ở phía IoT Gateway, password khi nhận lại sẽ được in ra console.
 #### **Header**
@@ -19,7 +19,7 @@ Password chỉ được trả lại vào request đầu tiên, các lần tiếp
 	"password": "raw_password_no_hash",
 }
 ```
-### `POST api/backend/login`
+### `POST /api/backend/login`
 Đăng nhập bằng `device_id` và `password` lấy được từ endpoint trên và từ console của IoT Gateway.
 #### **Header**
 Yêu cầu header:
@@ -40,7 +40,7 @@ Không thành công (`password` sai, `device_id` không tồn tại,...) , trả
 	"token": "eyJWT.payload.signature"
 }
 ```
-### `GET api/backend/data`
+### `GET /api/backend/data`
 **Quan trọng**: Sử dụng `text/event-stream` ([HTTP SSE](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events)) thay cho WebSocket để vận chuyển real-time data
 Lấy dữ liệu trực tiếp từ AWS IoT Core, real-time.
 #### **Header**
@@ -60,6 +60,16 @@ Trả về dữ liệu từ sensor data của thiết bị, liên tục, theo in
 	"timestamp": 1676347580.9927943
 }
 ```
+### `GET /api/backend/check_active`
+Kiểm tra xem thiết bị có đang hoạt động hay không. Nếu sau 3 giây mà thiết bị không trả lời thì mặc định trả lại `503 Service Unavailable`
+#### **Header**
+Yêu cầu header:
+- `Content-Type: application/json`
+- `Authorization: Bearer {token}`: `{token}` lấy từ response của API `POST /api/backend/login`
+#### **Body**
+Không yêu cầu body cho các `GET` requests.
+#### Response
+Trả lại `503 Service Unavailable` nếu thiết bị không hoạt động và `200 OK` nếu có. Thời gian timeout là 3 giây.
 ### `POST /api/backend/settings/data_rate`
 Thay đổi data rate của device
 

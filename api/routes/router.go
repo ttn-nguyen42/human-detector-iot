@@ -43,6 +43,7 @@ func Create(engine *gin.Engine) {
 	deviceInfoRepo := repositories.NewDeviceInfoRepository(deviceInfoCol)
 
 	deviceInfoService := services.NewDeviceInfoService(deviceInfoRepo)
+	commandService := services.NewCommandService("yolobit/command/activity", "yolobit/command/response")
 
 	// Unprotected endpoints
 	public := engine.Group("/api/backend")
@@ -57,4 +58,5 @@ func Create(engine *gin.Engine) {
 	protected.POST("/settings/data_rate", POSTUpdateDataRate())
 	protected.GET("/settings", GETGetAllSettings())
 	protected.GET("/data", ssEventHeader(), GETGetDeviceData())
+	protected.GET("/check_active", GetIsDeviceActive(commandService))
 }

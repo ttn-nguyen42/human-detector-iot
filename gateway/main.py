@@ -15,7 +15,7 @@ from database.sqlite import SQLDatabase, SqliteDatabase, get_sqlite_database
 from network.aws import Certs, get_certs_path, get_url_endpoint
 from network.mqtt import MQTTBroker
 from network.mqtt import PahoMQTT
-from actions.command import register_command_subscriber, register_settings_subcriber
+from actions.command import register_command_subscriber
 from actions.sensor_data import send_sensor_data
 from actions.settings import authenticate
 from repositories.command import CommandRepository, ICommandRepository
@@ -27,6 +27,7 @@ from services.sensor_data import ISensorDataService, SensorDataService
 from services.serial_data import ISerialService, SerialService
 from services.settings import ILocalSettingsService, LocalSettingsService
 from utils.utils import get_backend_port, get_backend_url, get_log_level
+from models.commands import *
 
 
 def main():
@@ -148,19 +149,19 @@ def main():
         # Listen to commands
         try:
             register_command_subscriber(device_id, command_service)
-            register_settings_subcriber(device_id, command_service)
         except Exception as reg_err:
             logging.info("Unable to register to command and settings topics: {0}".format(reg_err))
             db.close()
             aws_mqtt.disconnect()
             sys.exit()
             
-
+        command_service.send_response(CommandResponse("a", SUCCESS, ""))
         # Listen to sensor data from YoloBit
         # Then sends that to the service layer
         # This acts as a controller layer to complete the MVC architecture
         # Not implemented
         send_sensor_data(device_id, sensor_data_service, serial_con)
+        command_service.messenger_thread.join()
         return 0
     except KeyboardInterrupt:
         sys.exit()

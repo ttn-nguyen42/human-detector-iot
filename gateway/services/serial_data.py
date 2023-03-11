@@ -1,5 +1,6 @@
 import serial.tools.list_ports
 from serial import Serial
+import logging
 
 
 class ISerialService:
@@ -46,7 +47,11 @@ class SerialService(ISerialService):
         readable: int = self._serial.in_waiting
         result = []
         if readable > 0:
-            raw_seq: str = self._serial.read(readable).decode('utf-8')
+            try:
+                raw_seq: str = self._serial.read(readable).decode('utf-8')
+            except Exception as err:
+                logging.info(f"Cannot read from serial, skipping receiving data err={err}")
+                return result
             while ('{' in raw_seq) and ('}' in raw_seq):
                 start = raw_seq.find('{')
                 end = raw_seq.find('}')

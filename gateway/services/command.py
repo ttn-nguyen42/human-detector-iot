@@ -7,30 +7,46 @@ Keeps the business logic for handling settings changes from user
 import ast
 import logging
 from services.serial_data import ISerialService
-import models.commands
+from models.commands import *
 from paho.mqtt.client import MQTTMessage
 from repositories.command import ICommandRepository
-
+import json
+import threading
 
 class ICommandService:
     # Takes in a device ID then initiates a topic dedicated for
     # listening to activity commands (shutdown, start,...) from backend through AWS
     def receive_command(self, device_id: str) -> None:
         pass
-    
-    # Takes in a device ID then initiates a topic dedicated for
-    # listening to settings changes from backend through AWS
-    def receive_settings(self, device_id: str) -> None:
+
+    def send_response(self, res: CommandResponse):
         pass
 
+    def run(self):
+        pass
 
 class CommandService(ICommandService):
     _command_repository: ICommandRepository = None
     _serial: ISerialService = None
+    _deviceId: str = ""
+    _message_to_send = []
+    messenger_thread = None
+    _lock = None
 
     def __init__(self, command_repository: ICommandRepository, serial: ISerialService) -> None:
         self._command_repository = command_repository
         self._serial = serial
+        self._lock = threading.Lock()
+
+    def run(self):
+        logging.info("Spinning up messenger thread")
+        try:
+            self.messenger_thread = threading.Thread(
+                target=send_messages, args=(self,))
+            self.messenger_thread.start()
+        except Exception as err:
+            logging.error(f"Unable to create messenger thread err={err}")
+        return
 
     def receive_command(self, device_id: str) -> None:
         try:
@@ -38,35 +54,20 @@ class CommandService(ICommandService):
                 device_id=device_id,
                 callback=self._on_command_received
             )
+            self._deviceId = device_id
         except Exception as err:
+            logging.error(f"Unable to setup command receiver err={err}")
             raise err
         return
-    
-    def receive_settings(self, device_id: str) -> None:
+
+    def send_response(self, res: CommandResponse):
         try:
-            self._command_repository.subscribe_settings(
-                device_id=device_id,
-                callback=self._on_settings_received
-            )
+            self._command_repository.send_command_response(
+                device_id=self._deviceId, res=res)
+            logging.info("Sent activity response")
         except Exception as err:
-            raise err
-        return
-    
-    def _on_settings_received(self, client, userdata, message: MQTTMessage):
-        logging.debug(f"Settings ID={message.mid} payload={message.payload}")
-        if message.dup is True:
-            logging.debug(f"Received duplicate settings ID={message.mid}, skip")
-            return
-        parsed_dict = None
-        try:
-            parsed_dict = ast.literal_eval(message.payload.decode('utf-8'))
-        except Exception as err:
-            logging.error(f"Parsing command failed error={err}")
-        action = parsed_dict["action"]
-        if action == models.commands.UPDATE_SETTINGS:
-            # Received update settings command
-            # self._serial.write()
-            logging.info(f"Received update settings command")
+            logging.error(
+                f"Unable to send activity check response")
         return
 
     # Will be executed anytime a command is sent back from the backend
@@ -78,18 +79,55 @@ class CommandService(ICommandService):
             logging.debug(f"Received duplicate command ID={message.mid}, skip")
             return
         parsed_dict = None
+        req: CommandRequest = None
         try:
-            parsed_dict = ast.literal_eval(message.payload.decode('utf-8'))
+            payload_str = message.payload.decode('utf-8')
+            req_dict = json.loads(payload_str)
+            req = CommandRequest(
+                req_dict["action_id"], req_dict["action"], req_dict["payload"])
         except Exception as err:
             logging.error(f"Parsing command failed error={err}")
-        action = parsed_dict["action"]
-        if action == models.commands.START:
+            return
+        action = req.action
+        action_id = req.action_id
+        payload = req.payload
+        if action == START:
             # Received a start signal
             # self._serial.write()
             logging.info(f"Received start signal")
-        if action == models.commands.SHUTDOWN:
+            return
+        if action == SHUTDOWN:
             # Received shutdown signal
             # self._serial.write()
             logging.info(f"Received shutdown signal")
+            return
+        if action == ACTIVITY_CHECK:
+            # Received activity check
+            res: CommandResponse = CommandResponse(action_id=action_id,
+                                                   result=SUCCESS,
+                                                   payload="")
+            logging.info(f"Received activity check")
+            try:
+                self._serial.write(ACTIVITY_CHECK)
+            except Exception as err:
+                res.result = FAILURE
+            self._lock.acquire()
+            self._message_to_send.append(res)
+            logging.info(f"Added response to queue msg={res}")
+            self._lock.release()
         return
 
+
+def send_messages(service: CommandService):
+    logging.info("Waiting for messages")
+    while True:
+        if len(service._message_to_send) == 0:
+            continue
+        service._lock.acquire()
+        message = service._message_to_send.pop()
+        service._lock.release()
+        logging.info(
+            f"Received response message, ready to send m={message}")
+        service.send_response(message)
+        continue
+    return

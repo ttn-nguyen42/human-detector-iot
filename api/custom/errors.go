@@ -163,3 +163,60 @@ func NewAlreadyRegisteredError(message string) error {
 func (e *AlreadyRegisteredError) Error() string {
 	return e.Message
 }
+
+/*
+When a timeout is met
+*/
+type TimeoutError struct {
+	Message string `default:"Timed out"`
+}
+
+func NewTimeoutError(message string) error {
+	err := &TimeoutError{}
+	if len(message) != 0 {
+		err.Message = message
+	}
+	return err
+}
+
+func (e *TimeoutError) Error() string {
+	return e.Message
+}
+
+/*
+When a command message is unable to be sent
+*/
+type UnableToSendMessage struct {
+	Message string `default:"Unable to send message"`
+}
+
+func NewUnableToSendMessage(message string) error {
+	err := &UnableToSendMessage{}
+	if len(message) != 0 {
+		err.Message = message
+	}
+	return err
+}
+
+func (e *UnableToSendMessage) Error() string {
+	return e.Message
+}
+
+/*
+When a gateway is unable to response
+*/
+type InactiveGatewayError struct {
+	Message string `default:"Gateway is inactive"`
+}
+
+func NewInactiveGatewayError(message string) error {
+	err := &InactiveGatewayError{}
+	if len(message) != 0 {
+		err.Message = message
+	}
+	return err
+}
+
+func (e *InactiveGatewayError) Error() string {
+	return e.Message
+}

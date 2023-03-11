@@ -20,6 +20,9 @@ class CommandRequest(dict):
                       action=action,
                       payload=payload)
         
+    def __init__(self, js: str):
+        self.__dict__ = json.loads(js)
+        return
 
 # Responses
 SUCCESS = "success"

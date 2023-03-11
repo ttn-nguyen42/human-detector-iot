@@ -13,6 +13,7 @@ from repositories.command import ICommandRepository
 import json
 import threading
 
+
 class ICommandService:
     # Takes in a device ID then initiates a topic dedicated for
     # listening to activity commands (shutdown, start,...) from backend through AWS
@@ -24,6 +25,7 @@ class ICommandService:
 
     def run(self):
         pass
+
 
 class CommandService(ICommandService):
     _command_repository: ICommandRepository = None
@@ -83,8 +85,7 @@ class CommandService(ICommandService):
         try:
             payload_str = message.payload.decode('utf-8')
             req_dict = json.loads(payload_str)
-            req = CommandRequest(
-                req_dict["action_id"], req_dict["action"], req_dict["payload"])
+            req = CommandRequest(req_dict)
         except Exception as err:
             logging.error(f"Parsing command failed error={err}")
             return

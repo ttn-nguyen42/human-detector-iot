@@ -134,3 +134,18 @@ func (c *MongoCollection[E]) FindAll(ctx context.Context, filter interface{}) ([
 	}
 	return results, nil
 }
+
+/*
+A wrapper for MongoDB's UpdateOne
+*/
+func (c *MongoCollection[E]) UpdateOne(ctx context.Context, filter interface{}, upt interface{}) (*UpdateResult, error) {
+	result, err := c.Col.UpdateOne(ctx, filter, upt)
+	if err != nil {
+		return nil, err
+	}
+	ret := &UpdateResult{
+		MatchedFilter: int(result.MatchedCount),
+		MatchedField: int(result.ModifiedCount),
+	}
+	return ret, nil
+}

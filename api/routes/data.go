@@ -3,14 +3,18 @@ package routes
 import (
 	"fmt"
 	"io"
+	"iot_api/custom"
+	"iot_api/dtos"
 	"iot_api/models"
 	"iot_api/network"
+	"iot_api/services"
 	"iot_api/utils"
 	"net/http"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 /*
@@ -79,16 +83,91 @@ func GETGetDeviceData() gin.HandlerFunc {
 GET /api/backend/settings
 Requires JWT token. See auths/middleware.go
 */
-func GETGetAllSettings() gin.HandlerFunc {
+func GETGetAllSettings(service services.SettingsService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		deviceId := ctx.GetString("device_id")
 		if len(deviceId) == 0 {
 			ctx.JSON(http.StatusInternalServerError, MessageInternalServerError)
 			return
 		}
-		// Unimplemented
-		ctx.JSON(http.StatusOK, MessageResponse{
-			Message: "Ok",
+		res, err := service.GetSettings(deviceId)
+		if _, ok := err.(*custom.InternalServerError); ok {
+			ctx.JSON(http.StatusInternalServerError, MessageInternalServerError)
+			return
+		}
+		if _, ok := err.(*custom.BadIdError); ok {
+			ctx.JSON(http.StatusBadRequest, MessageResponse{
+				Message: "Device ID not found",
+			})
+			return
+		}
+		if _, ok := err.(*custom.ItemNotFoundError); ok {
+			// User should already have a settings
+			// if not create one with default settings
+			err = service.CreateSettings(deviceId, &dtos.POSTCreateSettings{})
+		}
+		if _, ok := err.(*custom.InternalServerError); ok {
+			ctx.JSON(http.StatusInternalServerError, MessageResponse{
+				Message: "Settings not found, failed to create new default settings",
+			})
+			return
+		}
+		ctx.JSON(http.StatusOK, res)
+	}
+}
+
+/*
+POST /api/backend/settings/data_rate
+Requires JWT token. See auths/middleware.go
+*/
+func POSTUpdateDataRate(service services.SettingsService) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		deviceId := ctx.GetString("device_id")
+		if len(deviceId) == 0 {
+			ctx.JSON(http.StatusInternalServerError, MessageInternalServerError)
+			return
+		}
+		var dto dtos.POSTDataRateRequest
+		err := ctx.BindJSON(&dto)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, MessageResponse{
+				Message: err.Error(),
+			})
+			logrus.Info(err.Error())
+			return
+		}
+		err = service.ChangeDataRate(deviceId, dto.RateInSeconds)
+		if _, ok := err.(*custom.ItemNotFoundError); ok {
+			ctx.JSON(http.StatusBadRequest, MessageResponse{
+				Message: "Device ID not found",
+			})
+			return
+		}
+		if _, ok := err.(*custom.InternalServerError); ok {
+			ctx.JSON(http.StatusInternalServerError, MessageResponse{
+				Message: "Unable to verify device ID",
+			})
+		}
+		if _, ok := err.(*custom.InactiveGatewayError); ok {
+			ctx.JSON(http.StatusServiceUnavailable, MessageResponse{
+				Message: "Device is not connected with gateway",
+			})
+			return
+		}
+		if _, ok := err.(*custom.TimeoutError); ok {
+			ctx.JSON(http.StatusGatewayTimeout, MessageResponse{
+				Message: "Gateway is not responding",
+			})
+			return
+		}
+		if _, ok := err.(*custom.UnableToSendMessage); ok {
+			ctx.JSON(http.StatusInternalServerError, MessageResponse{
+				Message: "Settings not updated",
+			})
+			return
+		}
+		ctx.JSON(http.StatusOK, IdResponse{
+			Id: deviceId,
 		})
 	}
 }

@@ -16,6 +16,7 @@ import (
 const (
 	DatabaseName         = "iot_database"
 	DeviceInfoCollection = "device_info"
+	SettingsCollection   = "settings"
 )
 
 func Create(engine *gin.Engine) {
@@ -26,8 +27,8 @@ func Create(engine *gin.Engine) {
 
 	// Healthcheck
 	engine.Use(healthcheck.New(healthcheck.Config{
-		HeaderName: "X-Check",
-		HeaderValue: "healthcheck",
+		HeaderName:   "X-Check",
+		HeaderValue:  "healthcheck",
 		ResponseCode: http.StatusTeapot,
 		ResponseText: "im a teapot",
 	}))
@@ -40,14 +41,20 @@ func Create(engine *gin.Engine) {
 		Col: dbClient.Database(DatabaseName).Collection(DeviceInfoCollection),
 	}
 
+	settingsCol := &database.MongoCollection[models.Settings]{
+		Col: dbClient.Database(DatabaseName).Collection(SettingsCollection),
+	}
+
 	deviceInfoRepo := repositories.NewDeviceInfoRepository(deviceInfoCol)
+	settingsRepo := repositories.NewSettingsRepository(settingsCol)
 
 	deviceInfoService := services.NewDeviceInfoService(deviceInfoRepo)
 	commandService := services.NewCommandService("yolobit/command/activity", "yolobit/command/response")
+	settingsService := services.NewSettingsService(settingsRepo, deviceInfoRepo, commandService)
 
 	// Unprotected endpoints
 	public := engine.Group("/api/backend")
-	public.POST("/register_device", POSTRegisterDevice(deviceInfoService))
+	public.POST("/register_device", POSTRegisterDevice(deviceInfoService, settingsService))
 	public.POST("/login", POSTLogin(deviceInfoService))
 
 	// Protected endpoints
@@ -55,8 +62,8 @@ func Create(engine *gin.Engine) {
 	// See auths/middleware
 	protected := engine.Group("/api/backend")
 	protected.Use(auths.JwtAuthMiddleware())
-	protected.POST("/settings/data_rate", POSTUpdateDataRate(commandService))
-	protected.GET("/settings", GETGetAllSettings())
+	protected.POST("/settings/data_rate", POSTUpdateDataRate(settingsService)) // Only works when device is connected
+	protected.GET("/settings", GETGetAllSettings(settingsService))
 	protected.GET("/data", ssEventHeader(), GETGetDeviceData())
 	protected.GET("/check_active", GetIsDeviceActive(commandService))
 }

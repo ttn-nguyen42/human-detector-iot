@@ -6,6 +6,8 @@ require github.com/gin-gonic/gin v1.8.2
 
 require github.com/RaMin0/gin-health-check v0.0.0-20180807004848-a677317b3f01
 
+require github.com/jinzhu/copier v0.3.5 // indirect
+
 require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/snappy v0.0.1 // indirect

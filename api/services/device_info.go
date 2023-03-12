@@ -12,7 +12,7 @@ import (
 )
 
 type DeviceInfoService interface {
-	CreatePassword(req *dtos.POSTRegisterDeviceDto) (*dtos.POSTRegisterDeviceResponse, error)
+	RegisterDevice(req *dtos.POSTRegisterDeviceDto) (*dtos.POSTRegisterDeviceResponse, error)
 	AuthenticateByPassword(req *dtos.POSTLoginRequest) (*dtos.POSTLoginResponse, error)
 }
 
@@ -26,13 +26,13 @@ func NewDeviceInfoService(repo repositories.DeviceInfoRepository) DeviceInfoServ
 	}
 }
 
-func (s *deviceInfoService) CreatePassword(req *dtos.POSTRegisterDeviceDto) (*dtos.POSTRegisterDeviceResponse, error) {
+func (s *deviceInfoService) RegisterDevice(req *dtos.POSTRegisterDeviceDto) (*dtos.POSTRegisterDeviceResponse, error) {
 	_, err := s.repo.GetCredentials(req.DeviceId)
-	if err == nil {
-		return nil, custom.NewAlreadyRegisteredError("Device already registered")
-	}
 	if _, ok := err.(*custom.ItemNotFoundError); !ok {
 		return nil, custom.NewInternalServerError(err.Error())
+	}
+	if err == nil {
+		return nil, custom.NewAlreadyRegisteredError("Device already registered")
 	}
 	rawPass := utils.GetRandomUUID()
 	hashPass := utils.GetPasswordHash(rawPass)

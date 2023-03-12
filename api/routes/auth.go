@@ -43,10 +43,55 @@ func POSTLogin(service services.DeviceInfoService) gin.HandlerFunc {
 			return
 		}
 		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, MessageResponse{
-				Message: "Internal Server Error",
-			})
+			ctx.JSON(http.StatusInternalServerError, MessageInternalServerError)
 		}
+
 		ctx.JSON(http.StatusOK, res)
+	}
+}
+
+/*
+POST /api/backend/register_device
+Register a device to the backend
+*/
+func POSTRegisterDevice(service services.DeviceInfoService, settings services.SettingsService) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		/*
+			POST /api/backend/register_device
+
+			Handles device registration.
+			The device will send its device_id
+			and the backend returns a password associated with it
+		*/
+		var postRequest dtos.POSTRegisterDeviceDto
+		// Take in raw payload in bytes
+		// deserializes it into a normal struct
+		err := ctx.BindJSON(&postRequest)
+
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, MessageResponse{
+				Message: "Invalid request body",
+			})
+			return
+		}
+		req, err := service.RegisterDevice(&postRequest)
+		if _, ok := err.(*custom.AlreadyRegisteredError); ok {
+			ctx.JSON(http.StatusConflict, MessageResponse{
+				Message: "Already registered device",
+			})
+			return
+		}
+		if _, ok := err.(*custom.InternalServerError); ok {
+			ctx.JSON(http.StatusInternalServerError, MessageInternalServerError)
+			return
+		}
+		err = settings.CreateSettings(postRequest.DeviceId, &dtos.POSTCreateSettings{})
+		if _, ok := err.(*custom.InternalServerError); ok {
+			// It is okay to fail, if settings failed to be created
+			// it will created next time someone request for it
+			ctx.JSON(http.StatusCreated, req)
+			return
+		}
+		ctx.JSON(http.StatusCreated, req)
 	}
 }

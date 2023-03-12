@@ -20,6 +20,9 @@ class ILocalSettingsService:
     def save_data_rate(self, device_id: str, settings: DataRateCommandSettings) -> any:
         pass
     
+    def save_settings(self, device_id: str, settings: DeviceSettings) -> any:
+        pass
+    
     def get_data_rate(self, device_id: str) -> any:
         pass
     
@@ -48,6 +51,14 @@ class LocalSettingsService(ILocalSettingsService):
             self._local_repository.save_settings(device_id=device_id, settings=local_settings)
         except Exception as err:
             logging.error(f"Unable to save new settings {err}")
+            raise err
+        return
+    
+    def save_settings(self, device_id: str, settings: DeviceSettings) -> any:
+        try:
+            self._local_repository.save_settings(device_id, settings)
+        except Exception as err:
+            logging.error(f"Unable to get local settings {err}")
             raise err
         return
     

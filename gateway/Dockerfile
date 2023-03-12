@@ -20,7 +20,7 @@ ENV LOG_LEVEL=""
 
 ENV SQLITE_DATABASE=""
 
-ENV URL_BACKEND=""
+ENV URL_BACKEND="localhost:8080"
 
 RUN mkdir /gateway/db
 

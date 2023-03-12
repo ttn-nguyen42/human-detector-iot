@@ -9,6 +9,7 @@ import logging
 from services.backend import IRemoteBackendService
 from services.settings import ILocalSettingsService
 from utils.utils import make_device_id
+from models.settings import *
 
 DEVICE_MODEL = "YoloBit Human Detector"
 
@@ -22,3 +23,22 @@ def authenticate(service: ILocalSettingsService) -> any:
     except Exception as err:
         raise err
     return saved[0], saved[1]
+
+def get_token(service: IRemoteBackendService, device_id: str, password: str) -> any:
+    # Retrieve a JWT token on startup
+    try:
+        token = service.get_token(device_id, password)
+    except Exception as err:
+        raise err
+    return token
+
+def get_setings(service: IRemoteBackendService, local_service: ILocalSettingsService, token: str) -> any:
+    # Retrieve settings from the backend
+    try: 
+        settings = service.get_settings(token)
+        local_service.save_settings(device_id, settings=DeviceSettings(
+            data_rate=settings.data_rate
+        ))
+    except Exception as err:
+        raise err
+    return settings

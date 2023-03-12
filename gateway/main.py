@@ -17,7 +17,7 @@ from network.mqtt import MQTTBroker
 from network.mqtt import PahoMQTT
 from actions.command import register_command_subscriber
 from actions.sensor_data import send_sensor_data
-from actions.settings import authenticate
+from actions.settings import authenticate, get_token, get_setings
 from repositories.command import CommandRepository, ICommandRepository
 from repositories.sensor_data import ISensorDataRepository, SensorDataRepository
 from repositories.settings import ILocalSettingsRepository, LocalSettingsRepository
@@ -28,6 +28,9 @@ from services.serial_data import ISerialService, SerialService
 from services.settings import ILocalSettingsService, LocalSettingsService
 from utils.utils import get_backend_port, get_backend_url, get_log_level
 from models.commands import *
+from dto.commands import *
+from dto.settings import *
+
 
 def main():
     global DATA_RATE
@@ -60,10 +63,10 @@ def main():
             http_con = http.client.HTTPConnection(conn_str, port, timeout=5)
             logging.debug(f"Connecting to {backend_url}:{port}")
             remote_backend_service: IRemoteBackendService = RemoteBackendService(
-            # Should inject HTTP client here
-            http_con=http_con
-        )
-        
+                # Should inject HTTP client here
+                http_con=http_con
+            )
+
         # Serial data
         # Will fails when no connected device is found
         try:
@@ -72,10 +75,10 @@ def main():
         except Exception as e:
             logging.info("Unable to find serial IOT device: {0}".format(e))
             sys.exit()
-        
+
         # Connecting to the database
         db: SQLDatabase = SqliteDatabase(sqlite_db_name).connect()
-        
+
         local_db_repository: ILocalSettingsRepository = LocalSettingsRepository(
             database=db
         ).initialize()
@@ -84,7 +87,6 @@ def main():
             local_repository=local_db_repository,
             be_service=remote_backend_service
         )
-            
 
         # The password and device_id acts as a username and password that we can use in the web app to determine
         # which device that we want to read data from and change settings for
@@ -117,7 +119,7 @@ def main():
             command_repository=command_repository,
             serial=serial_con
         )
-        
+
         # Connect to AWS MQTT
         try:
             aws_mqtt.connect()
@@ -126,7 +128,7 @@ def main():
                 "Unable to connect to message broker after retries: {0}".format(con_err))
             db.close()
             sys.exit()
-            
+
         # Authenticating to the backend
 
         # This will create/retrieve a device_id, then send it to the backend
@@ -146,25 +148,37 @@ def main():
             "Use this credentials to authenticate on web app and monitor this device")
         logging.info(f"Device ID: {device_id}")
         logging.info(f"Password: {password}")
-        
+
+        # Retrieve a JWT token
         try:
-            DATA_RATE = local_db_service.get_data_rate(device_id)
-            logging.info(f"Data rate: {DATA_RATE}")
+            token = get_token(service=remote_backend_service, deviceId=device_id, password=password)
         except Exception as err:
             logging.fatal("Unable to get data rate, stopping")
             db.close()
             aws_mqtt.disconnect()
             sys.exit()
         
+        # Retrieve settings
+        try:
+            settings = get_setings(service=remote_backend_service)
+            DATA_RATE = settings.data_rate
+            logging.info(f"Data rate: {DATA_RATE}")
+        except Exception as err:
+            logging.fatal("Unable to get data rate, stopping")
+            db.close()
+            aws_mqtt.disconnect()
+            sys.exit()
+
         # Listen to commands
         try:
             register_command_subscriber(device_id, command_service)
         except Exception as reg_err:
-            logging.info("Unable to register to command and settings topics: {0}".format(reg_err))
+            logging.info(
+                "Unable to register to command and settings topics: {0}".format(reg_err))
             db.close()
             aws_mqtt.disconnect()
             sys.exit()
-            
+
         # Listen to sensor data from YoloBit
         # Then sends that to the service layer
         # This acts as a controller layer to complete the MVC architecture

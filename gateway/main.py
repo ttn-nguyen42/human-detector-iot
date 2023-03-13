@@ -15,7 +15,7 @@ from network.mqtt import MQTTBroker
 from network.mqtt import PahoMQTT
 from actions.command import register_command_subscriber
 from actions.sensor_data import send_sensor_data
-from actions.settings import authenticate, get_token, get_setings
+from actions.settings import authenticate, get_token, get_settings
 from repositories.command import CommandRepository, ICommandRepository
 from repositories.sensor_data import ISensorDataRepository, SensorDataRepository
 from repositories.settings import ILocalSettingsRepository, LocalSettingsRepository
@@ -151,7 +151,7 @@ def main():
 
         # Retrieve settings
         try:
-            settings = get_setings(service=remote_backend_service, device_id=device_id, local_service=local_db_service)
+            settings = get_settings(service=remote_backend_service, device_id=device_id, local_service=local_db_service)
             utils.config.DATA_RATE = settings.data_rate
             logging.info(f"Data rate: {utils.config.DATA_RATE}")
         except Exception as err:

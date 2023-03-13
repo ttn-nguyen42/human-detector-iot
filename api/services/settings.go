@@ -60,7 +60,10 @@ func (s *settingsService) GetSettings(deviceId string) (*dtos.GETGetSettings, er
 	}
 	mod, err := s.repo.GetSettings(deviceId)
 	var dto dtos.GETGetSettings
-	copier.Copy(&dto, &mod)
+	err = copier.Copy(&dto, &mod)
+	if err != nil {
+		return nil, custom.NewInternalServerError("Unable to copy objects")
+	}
 	if err != nil {
 		return nil, err
 	}

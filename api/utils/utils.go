@@ -25,10 +25,10 @@ func GetRandomUUID() string {
 
 func GetRandomNumberInRange(start int, end int) int {
 	res := 0
-	if (start >= end) {
-		res = rand.Intn(start - end + 1) + end
+	if start >= end {
+		res = rand.Intn(start-end+1) + end
 	} else {
-		res = rand.Intn(end - start + 1) + start
+		res = rand.Intn(end-start+1) + start
 	}
 	return res
 }
@@ -71,9 +71,9 @@ func MD5Hash(str string) string {
 }
 
 type CertsPaths struct {
-	RootCA string
+	RootCA     string
 	PrivateKey string
-	Cert string
+	Cert       string
 }
 
 func GetAWSIoTCertPaths() (*CertsPaths, error) {
@@ -90,9 +90,9 @@ func GetAWSIoTCertPaths() (*CertsPaths, error) {
 		return nil, fmt.Errorf("missing AWS IoT cert path")
 	}
 	return &CertsPaths{
-		RootCA: rootCaPath,
+		RootCA:     rootCaPath,
 		PrivateKey: privateKeyPath,
-		Cert: certPath,
+		Cert:       certPath,
 	}, nil
 }
 
@@ -133,9 +133,9 @@ func IsTestMode() bool {
 func GetRandomSensorData(deviceId string) models.SensorData {
 	return models.SensorData{
 		Temperature: GetRandomNumberInRange(18, 35),
-		Humidity: GetRandomNumberInRange(0, 100),
-		Detected: GetRandomNumberInRange(0, 100) > 50,
-		DeviceId: deviceId,
-		Timestamp: float64(time.Now().Unix()),
+		Humidity:    GetRandomNumberInRange(0, 100),
+		Detected:    GetRandomNumberInRange(0, 100) > 50,
+		DeviceId:    deviceId,
+		Timestamp:   float64(time.Now().Unix()),
 	}
 }

@@ -36,7 +36,7 @@ func GetClient() *mongo.Client {
 // Returns a context that prevents the database query
 // from taking too much time
 func GetContext() (context.Context, context.CancelFunc) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	return ctx, cancel
 }
 
@@ -74,7 +74,10 @@ func Connect() *mongo.Client {
 func Close() {
 	ctx, cancel := GetContext()
 	defer cancel()
-	GetClient().Disconnect(ctx)
+	err := GetClient().Disconnect(ctx)
+	if err != nil {
+		logrus.Errorf("Unable to disconnect database client: %v", err)
+	}
 	logrus.Info("Database connection closed")
 }
 
@@ -145,7 +148,7 @@ func (c *MongoCollection[E]) UpdateOne(ctx context.Context, filter interface{}, 
 	}
 	ret := &UpdateResult{
 		MatchedFilter: int(result.MatchedCount),
-		MatchedField: int(result.ModifiedCount),
+		MatchedField:  int(result.ModifiedCount),
 	}
 	return ret, nil
 }

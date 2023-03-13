@@ -12,9 +12,9 @@ func GetLogLevel() logrus.Level {
 	if len(level) == 0 {
 		return logrus.InfoLevel
 	}
-	for _, a_level := range logrus.AllLevels {
-		if level == a_level.String() {
-			return a_level
+	for _, aLevel := range logrus.AllLevels {
+		if level == aLevel.String() {
+			return aLevel
 		}
 	}
 	return logrus.InfoLevel

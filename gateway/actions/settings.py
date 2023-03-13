@@ -31,7 +31,7 @@ def get_token(service: IRemoteBackendService, device_id: str, password: str) -> 
     return token
 
 
-def get_setings(service: IRemoteBackendService, local_service: ILocalSettingsService, device_id: str) -> any:
+def get_settings(service: IRemoteBackendService, local_service: ILocalSettingsService, device_id: str) -> any:
     # Retrieve settings from the backend
     try:
         settings = service.get_settings()

@@ -41,7 +41,8 @@ Không thành công (`password` sai, `device_id` không tồn tại,...) , trả
 }
 ```
 ### `GET /api/backend/data`
-**Quan trọng**: Sử dụng `text/event-stream` ([HTTP SSE](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events)) thay cho WebSocket để vận chuyển real-time data
+**Quan trọng**: Sử dụng `text/event-stream` ([HTTP SSE](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events)) thay cho WebSocket để vận chuyển real-time data.
+
 Lấy dữ liệu trực tiếp từ AWS IoT Core, real-time.
 #### **Header**
 Yêu cầu header:
@@ -61,24 +62,66 @@ Trả về dữ liệu từ sensor data của thiết bị, liên tục, theo in
 }
 ```
 ### `GET /api/backend/check_active`
-Kiểm tra xem thiết bị có đang hoạt động hay không. Nếu sau 3 giây mà thiết bị không trả lời thì mặc định trả lại `503 Service Unavailable`
+Kiểm tra xem thiết bị có đang hoạt động hay không. Phải được chạy trước khi hiển thị dashboard.
 #### **Header**
 Yêu cầu header:
 - `Content-Type: application/json`
 - `Authorization: Bearer {token}`: `{token}` lấy từ response của API `POST /api/backend/login`
 #### **Body**
 Không yêu cầu body cho các `GET` requests.
-#### Response
-Trả lại `503 Service Unavailable` nếu thiết bị không hoạt động và `200 OK` nếu có. Thời gian timeout là 3 giây.
+#### **Response**
+Trả lại `502 Bad Gateway` nếu gateway không hoạt động và
+`503 Service Unavailable` nếu controller không hoạt động và `200 OK` nếu có. Thời gian timeout là 3 giây.
+```
+{
+    "id": "ID_that_Gateway_creates_on_first_run"
+}
+```
 ### `POST /api/backend/settings/data_rate`
-Thay đổi data rate của device
+Thay đổi data rate của thiết bị (bao nhiêu giây gửi dữ liệu một lần). Chỉ được sử dụng request này khi thiết bị đang chạy.
+#### **Header**
+Yêu cầu header:
+- `Content-Type: application/json`
+- `Authorization: Bearer {token}`: `{token}` lấy từ response của API `POST /api/backend/login`
 
-Unimplemented
+#### **Body**
+
+```
+{
+    "rate_in_seconds": 10
+}
+```
+#### **Response**
+Trả lại `503 Service Unavailable` khi thiết bị không được kết nối, `504 Gateway Timeout` khi gateway không hoạt động, `200 OK` khi settings đã được thay đổi.
+```
+{
+    "id: "ID_that_Gateway_creates_on_first_run"
+}
+```
 ### `GET /api/backend/settings`
-Lấy các settings của device và web app
+Lấy các settings, ví dụ như data rate. Trong trường hợp user chưa có settings, API này sẽ tạo một default settings cho user đó.
+#### **Header**
+Yêu cầu header:
+- `Content-Type: application/json`
+- `Authorization: Bearer {token}`: `{token}` lấy từ response của API `POST /api/backend/login`
 
-Unimplemented
-### `POST /api/backend/settings`
-Thay đổi settings của device và web app
+#### **Body**
+Không yêu body trong các `GET` requests.
 
-Unimplemented
+#### **Response**
+Trả lại `200 OK` kèm settings. Ví dụ default settings:
+```
+{
+    "device_id": "ID_that_Gateway_creates_on_first_run",
+    "data_rate": 3
+}
+```
+## Notes
+Tất cả các endpoints sẽ trả lại `500 Internal Server Error` trong trường hợp database, MQTT server bị mất kết nối hoặc lỗi trong code của API. Khi này, response sẽ như sau:
+```
+{
+    "message": "Some error message"
+}
+```
+
+ `400 Bad Request` sẽ được trả lại khi body không đúng format hoặc giá trị. Tương tự như vậy, response được trả lại sẽ có format như trên. 

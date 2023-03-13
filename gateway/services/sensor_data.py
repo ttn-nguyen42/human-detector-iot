@@ -40,7 +40,7 @@ class SensorDataService(ISensorDataService):
             detected=data.detected,
             device_id=data.device_id,
             # Additional business logic added here that differs entity (SensorData) from dto (SensorDataDto)
-            timestamp=time.time()
+            timestamp=str(time.time())
         )
         self._sensor_data_repository.send_sensor_packet(entity)
         return

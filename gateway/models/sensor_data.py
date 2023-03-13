@@ -5,9 +5,6 @@ Keeps the data models (data classes) for the repository layer here
 """
 
 
-import time
-
-
 class SensorData(dict):
     # Represents a sensor data packet that will be sent to the back-end
 

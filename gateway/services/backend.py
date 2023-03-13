@@ -5,7 +5,6 @@ Service that communicates with the backend through HTTP
 """
 
 from http.client import HTTPConnection
-import json
 import logging
 from dto.settings import *
 
@@ -28,7 +27,7 @@ class IRemoteBackendService:
     # Gets device settings, create new default one if not found
     #
     # GET /api/backend/settings
-    def get_settings(self, token: str) -> DeviceSettingsResponse:
+    def get_settings(self) -> DeviceSettingsResponse:
         pass
 
 
@@ -58,15 +57,15 @@ class RemoteBackendService(IRemoteBackendService):
         return token
     
     def get_settings(self) -> DeviceSettingsResponse:
-        self.http_con.request("GET", "/api/backend/settings", headers=json.dumps({
+        self.http_con.request("GET", "/api/backend/settings", headers={
             "token": self.token,
-        }))
+        })
         res = self.http_con.getresponse()
         raw = res.read().decode('utf-8')
         logging.debug(raw)
         dto = DeviceSettingsResponse().from_json(raw)
         if int(res.status) != 200:
-            message = payload["message"]
+            message = dto["message"]
             raise Exception(
                 f"Cannot retrieve token for device ID, error={message}")
         return dto

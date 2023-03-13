@@ -8,9 +8,7 @@
 # Then authenticates the device with the backend through HTTP
 #
 import http.client
-import logging
 import sys
-import threading
 from database.sqlite import SQLDatabase, SqliteDatabase, get_sqlite_database
 from network.aws import Certs, get_certs_path, get_url_endpoint
 from network.mqtt import MQTTBroker
@@ -22,18 +20,16 @@ from repositories.command import CommandRepository, ICommandRepository
 from repositories.sensor_data import ISensorDataRepository, SensorDataRepository
 from repositories.settings import ILocalSettingsRepository, LocalSettingsRepository
 from services.backend import IRemoteBackendService, RemoteBackendService
-from services.command import CommandService, ICommandService
+from services.command import CommandService
 from services.sensor_data import ISensorDataService, SensorDataService
 from services.serial_data import ISerialService, SerialService
 from services.settings import ILocalSettingsService, LocalSettingsService
 from utils.utils import get_backend_port, get_backend_url, get_log_level
-from models.commands import *
 from dto.commands import *
-from dto.settings import *
+import utils.config
 
 
 def main():
-    global DATA_RATE
     try:
         logging.basicConfig(level=get_log_level())
         # Get environment variables/settings here
@@ -54,18 +50,13 @@ def main():
         port = None
         if backend_port != 0:
             port = backend_port
-        conn_str = ""
-        if "https" in backend_url:
-            conn_str = backend_url.replace("https://", "")
-            http_con = http.client.HTTPSConnection(conn_str, port, timeout=5)
-        else:
-            conn_str = backend_url.replace("http://", "")
-            http_con = http.client.HTTPConnection(conn_str, port, timeout=5)
-            logging.debug(f"Connecting to {backend_url}:{port}")
-            remote_backend_service: IRemoteBackendService = RemoteBackendService(
-                # Should inject HTTP client here
-                http_con=http_con
-            )
+        conn_str = backend_url.replace("http://", "")
+        http_con = http.client.HTTPConnection(conn_str, port, timeout=5)
+        logging.debug(f"Connecting to {backend_url}:{port}")
+        remote_backend_service: IRemoteBackendService = RemoteBackendService(
+            # Should inject HTTP client here
+            http_con=http_con
+        )
 
         # Serial data
         # Will fails when no connected device is found
@@ -115,7 +106,7 @@ def main():
             sensor_data_repository=sensor_data_repository
         )
 
-        command_service: ICommandService = CommandService(
+        command_service = CommandService(
             command_repository=command_repository,
             serial=serial_con
         )
@@ -151,20 +142,20 @@ def main():
 
         # Retrieve a JWT token
         try:
-            token = get_token(service=remote_backend_service, deviceId=device_id, password=password)
+            get_token(service=remote_backend_service, password=password, device_id=device_id)
         except Exception as err:
-            logging.fatal("Unable to get data rate, stopping")
+            logging.fatal(f"Unable to get data rate, stopping err={err}")
             db.close()
             aws_mqtt.disconnect()
             sys.exit()
-        
+
         # Retrieve settings
         try:
-            settings = get_setings(service=remote_backend_service)
-            DATA_RATE = settings.data_rate
-            logging.info(f"Data rate: {DATA_RATE}")
+            settings = get_setings(service=remote_backend_service, device_id=device_id, local_service=local_db_service)
+            utils.config.DATA_RATE = settings.data_rate
+            logging.info(f"Data rate: {utils.config.DATA_RATE}")
         except Exception as err:
-            logging.fatal("Unable to get data rate, stopping")
+            logging.fatal(f"Unable to get data rate, stopping err={err}")
             db.close()
             aws_mqtt.disconnect()
             sys.exit()

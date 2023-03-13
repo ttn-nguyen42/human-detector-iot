@@ -4,11 +4,8 @@ Created: nguyen_tran
 Perform settings related actions
 """
 
-from ast import Tuple
-import logging
 from services.backend import IRemoteBackendService
 from services.settings import ILocalSettingsService
-from utils.utils import make_device_id
 from models.settings import *
 
 DEVICE_MODEL = "YoloBit Human Detector"
@@ -24,6 +21,7 @@ def authenticate(service: ILocalSettingsService) -> any:
         raise err
     return saved[0], saved[1]
 
+
 def get_token(service: IRemoteBackendService, device_id: str, password: str) -> any:
     # Retrieve a JWT token on startup
     try:
@@ -32,10 +30,11 @@ def get_token(service: IRemoteBackendService, device_id: str, password: str) -> 
         raise err
     return token
 
-def get_setings(service: IRemoteBackendService, local_service: ILocalSettingsService, token: str) -> any:
+
+def get_setings(service: IRemoteBackendService, local_service: ILocalSettingsService, device_id: str) -> any:
     # Retrieve settings from the backend
-    try: 
-        settings = service.get_settings(token)
+    try:
+        settings = service.get_settings()
         local_service.save_settings(device_id, settings=DeviceSettings(
             data_rate=settings.data_rate
         ))

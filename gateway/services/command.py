@@ -4,15 +4,13 @@ Created: nguyen_tran
 Keeps the business logic for handling settings changes from user
 """
 
-import ast
-import logging
 from services.serial_data import ISerialService
 from models.commands import *
 from paho.mqtt.client import MQTTMessage
 from repositories.command import ICommandRepository
-import json
 import threading
 from dto.commands import *
+import utils.config
 
 
 class ICommandService:
@@ -32,15 +30,15 @@ class CommandService(ICommandService):
     _command_repository: ICommandRepository = None
     _serial: ISerialService = None
     _deviceId: str = ""
-    _message_to_send = []
+    message_to_send = []
     messenger_thread = None
-    _lock = None
+    lock = None
 
     def __init__(self, command_repository: ICommandRepository,
                  serial: ISerialService) -> None:
         self._command_repository = command_repository
         self._serial = serial
-        self._lock = threading.Lock()
+        self.lock = threading.Lock()
 
     def run(self):
         logging.info("Spinning up messenger thread")
@@ -71,20 +69,17 @@ class CommandService(ICommandService):
             logging.info("Sent activity response")
         except Exception as err:
             logging.error(
-                f"Unable to send activity check response")
+                f"Unable to send activity check response err={err}")
         return
 
     # Will be executed anytime a command is sent back from the backend
     # through AWS IoT Core
-    def _on_command_received(self, client, userdata, message: MQTTMessage):
-        global DATA_RATE
+    def _on_command_received(self, _, __, message: MQTTMessage):
         logging.debug(f"Command ID={message.mid} payload={message.payload}")
         # If the message is a duplicate
         if message.dup is True:
             logging.debug(f"Received duplicate command ID={message.mid}, skip")
             return
-        parsed_dict = None
-        req: CommandRequest = None
         try:
             payload_str = message.payload.decode('utf-8')
             req_dict = json.loads(payload_str)
@@ -114,11 +109,12 @@ class CommandService(ICommandService):
             try:
                 self._serial.write(ACTIVITY_CHECK)
             except Exception as err:
+                logging.info(f"Unable to send command to device err={err}")
                 res.result = FAILURE
-            self._lock.acquire()
-            self._message_to_send.append(res)
+            self.lock.acquire()
+            self.message_to_send.append(res)
             logging.info(f"Added response to queue msg={res}")
-            self._lock.release()
+            self.lock.release()
         if action == CHANGE_RATE:
             # Received data rate update
             res: CommandResponse = CommandResponse(action_id=action_id,
@@ -126,27 +122,27 @@ class CommandService(ICommandService):
                                                    payload="")
             try:
                 pl: DataRateCommandSettings = DataRateCommandSettings(payload)
+                logging.info(f"Received data rate change to {pl.rate_in_seconds}s")
+                utils.config.DATA_RATE = pl.rate_in_seconds
             except Exception as err:
                 logging.error(
                     f"Unable to parse data rate command settings err={err}")
-                res.result = FAILURE
-            logging.info(f"Received data rate change to {pl.rate_in_seconds}s")
-            DATA_RATE=pl.rate_in_seconds
-            self._lock.acquire()
-            self._message_to_send.append(res)
+            res.result = FAILURE
+            self.lock.acquire()
+            self.message_to_send.append(res)
             logging.info(f"Added response to queue msg={res}")
-            self._lock.release()
+            self.lock.release()
         return
 
 
 def send_messages(service: CommandService):
     logging.info("Waiting for messages")
     while True:
-        if len(service._message_to_send) == 0:
+        if len(service.message_to_send) == 0:
             continue
-        service._lock.acquire()
-        message = service._message_to_send.pop()
-        service._lock.release()
+        service.lock.acquire()
+        message = service.message_to_send.pop()
+        service.lock.release()
         logging.info(
             f"Received response message, ready to send m={message}")
         service.send_response(message)

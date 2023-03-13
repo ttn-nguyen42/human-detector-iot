@@ -12,7 +12,7 @@ from threading import Lock
 import typing
 
 import paho.mqtt.client as paho
-from awscrt import io, mqtt, auth, http
+from awscrt import mqtt
 from awsiot import mqtt_connection_builder
 
 
@@ -38,12 +38,12 @@ class MQTTBroker:
         pass
 
 
-def _on_publish(client, userdata, message_id) -> None:
+def _on_publish(_, __, message_id) -> None:
     logging.debug("Published message ID={0} success".format(message_id))
     return
 
 
-def _on_subscribe(client, userdata, mid, granted_qos) -> None:
+def _on_subscribe(_, __, mid, granted_qos) -> None:
     logging.debug("Subscribed ID={0}, QoS={1}".format(mid, granted_qos[0]))
     return
 
@@ -72,13 +72,13 @@ class PahoMQTT(MQTTBroker):
         )
         return
 
-    def _on_connected(self, client, userdata, flags, rc) -> None:
+    def _on_connected(self, _, __, flags, rc) -> None:
         self._is_connected = True
         logging.info("Connected to AWS IoT Core")
         logging.debug("Connected result={0}, flags={1}".format(rc, flags))
         return
 
-    def _on_disconnect(self, userdata, rc) -> None:
+    def _on_disconnect(self, _, rc) -> None:
         self._is_connected = False
         logging.info("Disconnected from AWS IoT Core")
         logging.debug("Disconnected result={0}".format(rc))
@@ -103,6 +103,7 @@ class PahoMQTT(MQTTBroker):
     # Publish a message to the broker
     def publish(self, topic: str, payload: typing.Dict[str, any]) -> None:
         self._client.on_publish = _on_publish
+        result = None
         try:
             pl = json.dumps(payload)
             result = self._client.publish(
@@ -134,10 +135,9 @@ class PahoMQTT(MQTTBroker):
         return
 
 
-
 class IotCoreMQTT(MQTTBroker):
     # Implements MQTTBroker
-    
+
     #
     # Not used
     #
@@ -145,7 +145,11 @@ class IotCoreMQTT(MQTTBroker):
     _is_connected: bool = False
     _lock: Lock = Lock()
 
-    def __init__(self, endpoint_url: str, cert_filepath: str, private_key_filepath: str, ca_filepath: str, client_id: str) -> None:
+    def __init__(self, endpoint_url: str,
+                 cert_filepath: str,
+                 private_key_filepath: str,
+                 ca_filepath: str,
+                 client_id: str) -> None:
         self._is_connected = False
         self._connection = mqtt_connection_builder.mtls_from_path(
             endpoint=endpoint_url,
@@ -161,7 +165,7 @@ class IotCoreMQTT(MQTTBroker):
         return
 
     def connect(self) -> None:
-        if self._is_connected == True:
+        if self._is_connected:
             logging.error("Already connected to AWS IoT Core MQTT broker")
             return
         connect_future = self._connection.connect()

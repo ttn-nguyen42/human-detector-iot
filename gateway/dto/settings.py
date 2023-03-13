@@ -1,4 +1,7 @@
 # From backend
+import json
+
+
 class DeviceSettingsResponse(dict):
     # In seconds
     data_rate: int

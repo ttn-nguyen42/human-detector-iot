@@ -1,4 +1,4 @@
-from ast import Tuple
+
 import logging
 from database.sqlite import SQLDatabase
 from models.settings import DeviceSettings

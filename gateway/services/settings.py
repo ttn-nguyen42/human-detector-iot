@@ -4,8 +4,6 @@ Created: nguyen_tran
 Update settings, device_id and perform necessary changes to the YoloBit device
 """
 
-from ast import Tuple
-import logging
 from services.backend import IRemoteBackendService
 from repositories.settings import ILocalSettingsRepository
 from utils.utils import make_device_id
@@ -19,15 +17,13 @@ class ILocalSettingsService:
 
     def save_data_rate(self, device_id: str, settings: DataRateCommandSettings) -> any:
         pass
-    
+
     def save_settings(self, device_id: str, settings: DeviceSettings) -> any:
         pass
-    
+
     def get_data_rate(self, device_id: str) -> any:
         pass
-    
-    def get_device_id(self) -> any:
-        pass
+
 
 class LocalSettingsService(ILocalSettingsService):
     # Implements ILocalSettingsService
@@ -39,7 +35,7 @@ class LocalSettingsService(ILocalSettingsService):
         self._local_repository = local_repository
         self._backend_service = be_service
         return
-    
+
     def save_data_rate(self, device_id: str, settings: DataRateCommandSettings) -> any:
         try:
             local_settings = self._local_repository.get_settings()
@@ -53,7 +49,7 @@ class LocalSettingsService(ILocalSettingsService):
             logging.error(f"Unable to save new settings {err}")
             raise err
         return
-    
+
     def save_settings(self, device_id: str, settings: DeviceSettings) -> any:
         try:
             self._local_repository.save_settings(device_id, settings)
@@ -61,7 +57,7 @@ class LocalSettingsService(ILocalSettingsService):
             logging.error(f"Unable to get local settings {err}")
             raise err
         return
-    
+
     def get_data_rate(self, device_id: str) -> any:
         try:
             local_settings = self._local_repository.get_settings()

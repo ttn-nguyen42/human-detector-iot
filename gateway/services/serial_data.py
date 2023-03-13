@@ -14,15 +14,23 @@ class ISerialService:
         pass
 
 
+def _find_ports() -> str:
+    all_ports = serial.tools.list_ports.comports()
+    for port, desc, _ in sorted(all_ports):
+        if "Serial" in desc:
+            return port
+    return ""
+
+
 class SerialService(ISerialService):
     _serial = None
     _port = None
 
     def __init__(self, port: str) -> None:
-        if len(port) != 0 and port != None:
+        if len(port) != 0 and port is not None:
             self._port = port
         else:
-            self._port = self._find_ports()
+            self._port = _find_ports()
         if len(self._port) == 0:
             raise Exception("Unable to find port")
         return
@@ -33,13 +41,6 @@ class SerialService(ISerialService):
         except Exception as err:
             raise err
         return
-
-    def _find_ports(self) -> str:
-        all = serial.tools.list_ports.comports()
-        for port, desc, _ in sorted(all):
-            if "Serial" in desc:
-                return port
-        return ""
 
     def read(self):
         if self._serial is None:
@@ -57,7 +58,7 @@ class SerialService(ISerialService):
                 end = raw_seq.find('}')
                 if start < 0 or end < 0:
                     return result
-                result.append(raw_seq[start:end +1])
+                result.append(raw_seq[start:end + 1])
                 if end == len(raw_seq):
                     raw_seq = ""
                     continue

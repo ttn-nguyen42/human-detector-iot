@@ -15,16 +15,8 @@ class CommandRequest(dict):
     action: str
     payload: str
 
-    def __init__(self, action_id: str, action: str, payload: str) -> None:
-        self.action_id = action_id
-        self.action = action
-        self.payload = payload
-        dict.__init__(self,
-                      action_id=action_id,
-                      action=action,
-                      payload=payload)
-
     def __init__(self, js: str):
+        super().__init__()
         self.__dict__ = json.loads(js)
         return
 

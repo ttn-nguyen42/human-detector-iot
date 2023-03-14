@@ -32,6 +32,9 @@ func NewNotificationService(creds *network.SMTPAuth, settingsService SettingsSer
 }
 
 func (s *notificationService) SendEmail(dto *SendEmailOptions) error {
+	if len(dto.To) == 0 {
+		return custom.NewUnableToSendMessage("Empty destination")
+	}
 	creds := s.Credentials.Credentials
 	sender := creds.Sender
 	if len(dto.From) > 0 {
@@ -52,7 +55,7 @@ func (s *notificationService) SendEmail(dto *SendEmailOptions) error {
 func (s *notificationService) SendEmailNotification(deviceId string, title string, message string) error {
 	settings, err := s.SettingsService.GetSettings(deviceId)
 	if err != nil {
-		return err
+		return custom.NewItemNotFoundError("No settings found")
 	}
 	receivers := settings.NotificationEmails
 	err = s.SendEmail(&SendEmailOptions{
@@ -60,6 +63,9 @@ func (s *notificationService) SendEmailNotification(deviceId string, title strin
 		Title:   title,
 		Message: message,
 	})
+	if _, ok := err.(*custom.UnableToSendMessage); ok {
+		return err
+	}
 	if err != nil {
 		return custom.NewInternalServerError(err.Error())
 	}

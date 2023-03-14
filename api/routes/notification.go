@@ -31,6 +31,20 @@ func POSTSendEmailNotification(service services.NotificationService) gin.Handler
 			return
 		}
 		err = service.SendEmailNotification(deviceId, dto.Title, dto.Message)
+		if _, ok := err.(*custom.ItemNotFoundError); ok {
+			ctx.JSON(http.StatusNotFound, MessageResponse{
+				Message: "No settings found",
+			})
+			logrus.Info(err.Error())
+			return
+		}
+		if _, ok := err.(*custom.UnableToSendMessage); ok {
+			ctx.JSON(http.StatusOK, MessageResponse{
+				Message: "Tried sending notification, no recipient to send",
+			})
+			logrus.Infof("No recipient to sent for ID=", deviceId)
+			return
+		}
 		if _, ok := err.(*custom.InternalServerError); ok {
 			ctx.JSON(http.StatusInternalServerError, MessageInternalServerError)
 			logrus.Error(err.Error())

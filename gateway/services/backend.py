@@ -17,13 +17,13 @@ class IRemoteBackendService:
     # { "device_id": "some_id", "model": "YoloBit" }
     def authenticate(self, device_id: str) -> str:
         pass
-    
+
     # Login and retrieve a JWT token
     #
     # POST /api/backend/login
     def get_token(self, device_id: str, password: str) -> str:
         pass
-    
+
     # Gets device settings, create new default one if not found
     #
     # GET /api/backend/settings
@@ -38,7 +38,19 @@ class RemoteBackendService(IRemoteBackendService):
     def __init__(self, http_con: HTTPConnection) -> None:
         self.http_con = http_con
         return
-    
+
+    def send_notification(self, title: str, message: str) -> None:
+        self.http_con.request("POST", "/api/backend/notify", headers={
+            "token": self.token,
+        }, body=json.dumps({
+            "title": title,
+            "message": message
+        }))
+        res = self.http_con.getresponse()
+        raw = res.read().decode('utf-8')
+        logging.debug(raw)
+        payload = json.loads(raw)
+
     def get_token(self, device_id: str, password: str) -> str:
         self.http_con.request("POST", '/api/backend/login', json.dumps({
             "device_id": device_id,
@@ -55,7 +67,7 @@ class RemoteBackendService(IRemoteBackendService):
         token = payload["token"]
         self.token = token
         return token
-    
+
     def get_settings(self) -> DeviceSettingsResponse:
         self.http_con.request("GET", "/api/backend/settings", headers={
             "token": self.token,
@@ -81,6 +93,7 @@ class RemoteBackendService(IRemoteBackendService):
         payload = json.loads(raw)
         if int(res.status) != 201:
             message = payload["message"]
-            raise Exception(f"Cannot retrieve password for device ID, error={message}")
+            raise Exception(
+                f"Cannot retrieve password for device ID, error={message}")
         password = payload["password"]
         return password

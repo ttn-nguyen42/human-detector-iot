@@ -10,9 +10,9 @@ import (
 )
 
 /*
-POST /api/backend/login
-Returns a JWT token that will be used to authenticate other requests
-*/
+ * POST /api/backend/login
+ * Returns a JWT token that will be used to authenticate other requests
+ */
 func POSTLogin(service services.DeviceInfoService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var creds dtos.POSTLoginRequest

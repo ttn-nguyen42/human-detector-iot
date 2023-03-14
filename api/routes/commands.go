@@ -9,9 +9,9 @@ import (
 )
 
 /*
-GET /api/backend/check_active
-Check if the provided device is active or not
-*/
+ * GET /api/backend/check_active
+ *Check if the provided device is active or not
+ */
 func GetIsDeviceActive(service services.CommandService) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// Device ID from middleware

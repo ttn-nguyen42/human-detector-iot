@@ -5,6 +5,11 @@ type POSTCreateSettings struct {
 }
 
 type GETGetSettings struct {
-	DeviceId string `json:"device_id"`
-	DataRate int    `json:"data_rate" copier:"data_rate"`
+	DeviceId           string   `json:"device_id"`
+	DataRate           int      `json:"data_rate" copier:"data_rate"`
+	NotificationEmails []string `json:"email" copier:"email"`
+}
+
+type POSTChangeEmail struct {
+	Email []string `json:"email" copier:"email"`
 }

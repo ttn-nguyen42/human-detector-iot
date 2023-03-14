@@ -139,3 +139,44 @@ func GetRandomSensorData(deviceId string) models.SensorData {
 		Timestamp:   float64(time.Now().Unix()),
 	}
 }
+
+type SMTPSettings struct {
+	Host     string
+	Username string
+	Password string
+	Sender   string
+	Port     string
+}
+
+/*
+ * Retrieve SMTP settings from environment variables
+ */
+func GetSMTPSettings() (*SMTPSettings, error) {
+	host := os.Getenv(EnvEmailSMTPHost)
+	if len(host) == 0 {
+		return nil, fmt.Errorf("missing SMTP host URL")
+	}
+	username := os.Getenv(EnvEmailSMTPUsername)
+	if len(username) == 0 {
+		return nil, fmt.Errorf("missing SMTP username")
+	}
+	password := os.Getenv(EnvEmailSMTPPassword)
+	if len(password) == 0 {
+		return nil, fmt.Errorf("missing SMTP password")
+	}
+	sender := os.Getenv(EnvEmailSender)
+	if len(sender) == 0 {
+		return nil, fmt.Errorf("missing email sender")
+	}
+	port := os.Getenv(EnvEmailSMTPPort)
+	if len(port) == 0 {
+		return nil, fmt.Errorf("missing SMTP port")
+	}
+	return &SMTPSettings{
+		Host:     host,
+		Username: username,
+		Password: password,
+		Sender:   sender,
+		Port:     port,
+	}, nil
+}

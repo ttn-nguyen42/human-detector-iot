@@ -13,6 +13,7 @@ type SettingsService interface {
 	CreateSettings(deviceId string, req *dtos.POSTCreateSettings) error
 	GetSettings(deviceId string) (*dtos.GETGetSettings, error)
 	ChangeDataRate(deviceId string, newRate int) error
+	ChangeEmail(deviceId string, newEmail []string) error
 }
 
 type settingsService struct {
@@ -59,13 +60,13 @@ func (s *settingsService) GetSettings(deviceId string) (*dtos.GETGetSettings, er
 		return nil, custom.NewBadIdError("Device not found")
 	}
 	mod, err := s.repo.GetSettings(deviceId)
+	if err != nil {
+		return nil, err
+	}
 	var dto dtos.GETGetSettings
 	err = copier.Copy(&dto, &mod)
 	if err != nil {
 		return nil, custom.NewInternalServerError("Unable to copy objects")
-	}
-	if err != nil {
-		return nil, err
 	}
 	return &dto, nil
 }
@@ -88,6 +89,21 @@ func (s *settingsService) ChangeDataRate(deviceId string, newRate int) error {
 	}
 	// Key equals bson key in the Settings model for data rate
 	err = s.repo.UpdateSettings(deviceId, "data_rate", newRate)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *settingsService) ChangeEmail(deviceId string, newEmail []string) error {
+	_, err := s.credsRepo.GetCredentials(deviceId)
+	if err != nil {
+		return custom.NewInternalServerError(err.Error())
+	}
+	if _, ok := err.(*custom.ItemNotFoundError); ok {
+		return custom.NewItemNotFoundError("Device not found")
+	}
+	err = s.repo.UpdateSettings(deviceId, "email", newEmail)
 	if err != nil {
 		return err
 	}

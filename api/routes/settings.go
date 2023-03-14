@@ -35,7 +35,10 @@ func GETGetAllSettings(service services.SettingsService) gin.HandlerFunc {
 		if _, ok := err.(*custom.ItemNotFoundError); ok {
 			// User should already have a settings
 			// if not create one with default settings
-			err = service.CreateSettings(deviceId, &dtos.POSTCreateSettings{})
+			err = service.CreateSettings(deviceId, &dtos.POSTCreateSettings{
+				DataRateInSeconds: 3,
+			})
+			res, _ = service.GetSettings(deviceId)
 		}
 		if _, ok := err.(*custom.InternalServerError); ok {
 			ctx.JSON(http.StatusInternalServerError, MessageResponse{
@@ -120,26 +123,25 @@ func POSTChangeNotificationEmail(service services.SettingsService) gin.HandlerFu
 			ctx.JSON(http.StatusBadRequest, MessageResponse{
 				Message: err.Error(),
 			})
-			logrus.Info(err.Error())
+			logrus.Error(err.Error())
 			return
 		}
 		err = service.ChangeEmail(deviceId, dto.Email)
 		if _, ok := err.(*custom.FieldMissingError); ok {
 			// Service will insert a new "email" field into the database
 			// therefore this will not be a matter
-			ctx.JSON(http.StatusInternalServerError, MessageInternalServerError)
-			logrus.Error(err.Error())
-			return
+			logrus.Info("Email field inserted")
 		}
 		if _, ok := err.(*custom.ItemNotFoundError); ok {
 			ctx.JSON(http.StatusBadRequest, MessageResponse{
-				Message: "Device ID not found",
+				Message: "Unable to find settings",
 			})
+			logrus.Error(err.Error())
 			return
 		}
 		if _, ok := err.(*custom.InternalServerError); ok {
 			ctx.JSON(http.StatusInternalServerError, MessageInternalServerError)
-			logrus.Error(err.Error())
+			logrus.Errorf("Unknown error: %v", err.Error())
 			return
 		}
 		ctx.JSON(http.StatusOK, IdResponse{

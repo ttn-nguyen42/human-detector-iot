@@ -1,10 +1,10 @@
 package services
 
 import (
-	"fmt"
 	"iot_api/custom"
 	"iot_api/network"
-	"net/smtp"
+
+	"github.com/go-mail/mail"
 )
 
 type SendEmailOptions struct {
@@ -33,12 +33,16 @@ func NewNotificationService(creds *network.SMTPAuth, settingsService SettingsSer
 
 func (s *notificationService) SendEmail(dto *SendEmailOptions) error {
 	creds := s.Credentials.Credentials
-	addr := fmt.Sprintf("%v:%v", creds.Host, creds.Port)
-	sender := s.Credentials.Credentials.Sender
+	sender := creds.Sender
 	if len(dto.From) > 0 {
 		sender = dto.From
 	}
-	err := smtp.SendMail(addr, s.Credentials.Auth, sender, dto.To, []byte(dto.Message))
+	mail := mail.NewMessage()
+	mail.SetHeader("From", sender)
+	mail.SetHeader("To", dto.To...)
+	mail.SetHeader("Subject", dto.Title)
+	mail.SetBody("text/html", dto.Message)
+	err := s.Credentials.Dialer.DialAndSend(mail)
 	if err != nil {
 		return custom.NewInternalServerError(err.Error())
 	}

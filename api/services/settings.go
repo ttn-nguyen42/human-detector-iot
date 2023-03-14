@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"iot_api/custom"
 	"iot_api/dtos"
 	"iot_api/models"
@@ -41,12 +42,13 @@ func (s *settingsService) CreateSettings(deviceId string, req *dtos.POSTCreateSe
 		return custom.NewItemNotFoundError("Device not found")
 	}
 	mod := &models.Settings{
-		DeviceId: deviceId,
-		DataRate: req.DataRateInSeconds,
+		DeviceId:           deviceId,
+		DataRate:           req.DataRateInSeconds,
+		NotificationEmails: []string{},
 	}
 	_, err = s.repo.SaveSettings(mod)
 	if err != nil {
-		return custom.NewInternalServerError("Unable to save settings")
+		return custom.NewInternalServerError(fmt.Sprintf("Unable to save settings: %v", err.Error()))
 	}
 	return nil
 }
@@ -66,7 +68,7 @@ func (s *settingsService) GetSettings(deviceId string) (*dtos.GETGetSettings, er
 	var dto dtos.GETGetSettings
 	err = copier.Copy(&dto, &mod)
 	if err != nil {
-		return nil, custom.NewInternalServerError("Unable to copy objects")
+		return nil, custom.NewInternalServerError(fmt.Sprintf("Unable to copy object: %v", err.Error()))
 	}
 	return &dto, nil
 }

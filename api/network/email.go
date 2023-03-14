@@ -2,16 +2,17 @@ package network
 
 import (
 	"iot_api/utils"
-	"net/smtp"
+	"strconv"
 	"sync"
 
+	"github.com/go-mail/mail"
 	"github.com/sirupsen/logrus"
 )
 
 var emailOnce sync.Once
 
 type SMTPAuth struct {
-	Auth smtp.Auth
+	Dialer *mail.Dialer
 	Credentials *utils.SMTPSettings
 }
 
@@ -24,8 +25,9 @@ func GetSMTPAuth() *SMTPAuth {
 	}
 	emailOnce.Do(func() {
 		creds := getSMTPSettings()
+		port, _ := strconv.Atoi(creds.Port)
 		smtpAuth = &SMTPAuth{
-			Auth: smtp.PlainAuth("", creds.Username, creds.Password, creds.Host),
+			Dialer: mail.NewDialer(creds.Host, port, creds.Username, creds.Password),
 			Credentials: creds,
 		}
 	})

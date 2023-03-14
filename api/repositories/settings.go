@@ -5,6 +5,7 @@ import (
 	"iot_api/database"
 	"iot_api/models"
 
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -67,11 +68,12 @@ func (r *settingsRepository) UpdateSettings(deviceId string, key string, value i
 	if err != nil || res == nil {
 		return custom.NewInternalServerError(err.Error())
 	}
+	if res.MatchedFilter == 0 {
+		logrus.Debugf("Filter: %v", filter)
+		return custom.NewItemNotFoundError("Cannot find filtered document")
+	}
 	if res.MatchedField == 0 {
 		return custom.NewFieldMissingError("Field not found")
-	}
-	if res.MatchedFilter == 0 {
-		return custom.NewItemNotFoundError("Cannot find filtered document")
 	}
 	return nil
 }
